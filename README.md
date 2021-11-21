@@ -2,6 +2,8 @@
 
 Data analysis examples for the eMOTIONAL Cities project. Data used in the notebooks has been made publicly available in Amazon Simple Storage Service (S3) buckets.
 
+More information about sample data sharing can be found in the [eMOTIONAL Cities repository](https://github.com/emotional-cities/data-share).
+
 ## Compatible Environments
 
 [Visual Studio Code](https://code.visualstudio.com/): All notebooks have been tested in Visual Studio Code on a Windows platform. Tests in other platforms and environments are forthcoming and will be added here.
