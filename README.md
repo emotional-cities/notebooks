@@ -2,7 +2,7 @@
 
 Data analysis examples for the eMOTIONAL Cities project. Data used in the notebooks has been made publicly available in Amazon Simple Storage Service (S3) buckets.
 
-More information about sample data sharing can be found in the [eMOTIONAL Cities repository](https://github.com/emotional-cities/data-share).
+More information about sample data sharing can be found in the [eMOTIONAL Cities data-share repository](https://github.com/emotional-cities/data-share).
 
 ## Compatible Environments
 
