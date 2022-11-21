@@ -10,8 +10,12 @@ More information about sample data sharing can be found in the [eMOTIONAL Cities
 
 ## How to build
 
-The current notebook requires Python 3.9+ to run successfully. The file `requirements.txt` in the `python` folder contains the list of minimal package dependencies required.
+1. Open project folder in VS Code
+2. Install [miniconda](https://docs.conda.io/en/latest/miniconda.html) (Python 3.9)
+3. Install [Python Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+4. Create environment from VS Code:
+  - `Ctrl+Shift+P` > `Create Environment`
+  - Select `.conda` environment
+5. Make sure correct environment is selected in the notebook
 
-### Windows (self-contained)
-
-For Windows environments, a self-contained `setup.ps1` is included in the `python` folder which can be used to download a self-contained WinPython distribution which will automatically configure all required dependencies.
+The current notebook requires Python 3.9+ to run successfully. The file `environment.yml` contains the list of minimal package dependencies required.
