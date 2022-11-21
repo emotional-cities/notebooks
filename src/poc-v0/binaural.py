@@ -1,5 +1,4 @@
 import wave
-from matplotlib.pyplot import stem
 import numpy as np
 import pandas as pd
 
