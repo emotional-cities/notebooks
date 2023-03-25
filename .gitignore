@@ -3,3 +3,4 @@ winpython
 packages
 cache
 .env
+.vscode
