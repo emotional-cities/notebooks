@@ -72,6 +72,7 @@ def build_benchmarkschema_tinkerforge(root: Union[str, ComplexPath],
                                                                 ])
     return streams
 
+
 def build_benchmarkschema_empatica(root: Union[str, ComplexPath],
                  parent_dataset = None,
                  autoload: bool = False) -> DotMap:
@@ -94,6 +95,7 @@ def build_benchmarkschema_empatica(root: Union[str, ComplexPath],
 
     return streams
 
+
 def build_benchmarkschema_accelerometer(root: Union[str, ComplexPath],
                  parent_dataset = None,
                  autoload: bool = False) -> DotMap:
@@ -115,6 +117,7 @@ def build_benchmarkschema_accelerometer(root: Union[str, ComplexPath],
     streams.Accelerometer =                       AccelerometerStream(device='Accelerometer', streamlabel='Accelerometer', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     return streams
+
 
 def build_benchmarkschema_microphone(root: Union[str, ComplexPath],
                  parent_dataset = None,
@@ -159,6 +162,10 @@ def build_benchmarkschema_enobioeeg(root: Union[str, ComplexPath],
     streams.BioData.Clear =                       HarpStream(40, device='BioData', streamlabel='Clear', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     # Empatica streams
+    streams.EEG =                                  EegStream(device='Enobio', streamlabel='EEG', root=root, autoload=autoload, parent_dataset=parent_dataset, autoalign=False)
+
+    return streams
+
     streams.EEG =                                  EegStream(device='Enobio', streamlabel='EEG', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     return streams
