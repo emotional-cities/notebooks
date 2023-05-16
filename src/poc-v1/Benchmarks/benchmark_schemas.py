@@ -166,6 +166,26 @@ def build_benchmarkschema_enobioeeg(root: Union[str, ComplexPath],
 
     return streams
 
-    streams.EEG =                                  EegStream(device='Enobio', streamlabel='EEG', root=root, autoload=autoload, parent_dataset=parent_dataset)
+
+def build_benchmarkschema_pupillabs(root: Union[str, ComplexPath],
+                 parent_dataset = None,
+                 autoload: bool = False) -> DotMap:
+
+
+    root = ensure_complexpath(root)
+    streams = DotMap()
+    # BioData streams
+    streams.BioData.EnableStreams =               HarpStream(32, device='BioData', streamlabel='EnableStreams', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.BioData.DisableStreams =              HarpStream(33, device='BioData', streamlabel='DisableStreams', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.BioData.Set =                         HarpStream(34, device='BioData', streamlabel='Set', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.BioData.Clear =                       HarpStream(35, device='BioData', streamlabel='Clear', root=root, autoload=autoload, parent_dataset=parent_dataset)
+
+    # PupilLabs streams
+    streams.PupilLabs.Counter.DecodedFrames =     HarpStream(209, device='PupilLabs', streamlabel='Counter.DecodedFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.RawFrames =         HarpStream(210, device='PupilLabs', streamlabel='Counter.RawFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.IMU =               HarpStream(211, device='PupilLabs', streamlabel='Counter.IMU', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.Gaze =              HarpStream(212, device='PupilLabs', streamlabel='Counter.Gaze', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.Audio =             HarpStream(213, device='PupilLabs', streamlabel='Counter.Audio', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.Key =               HarpStream(214, device='PupilLabs', streamlabel='Counter.Key', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     return streams
