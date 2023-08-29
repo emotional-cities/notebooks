@@ -4,3 +4,4 @@ packages
 cache
 .env
 .vscode
+.conda

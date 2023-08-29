@@ -36,33 +36,33 @@ def custom_schema(root: Union[str, ComplexPath],
     streams.BioData.Clear =                       HarpStream(40, device='BioData', streamlabel='Clear', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     # TinkerForge streams
-    streams.TK.GPS.Latitude =                     HarpStream(227, device='TK', streamlabel='GPS.Latitude', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.GPS.Longitude =                    HarpStream(228, device='TK', streamlabel='GPS.Longitude', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.GPS.Altitude =                     HarpStream(229, device='TK', streamlabel='GPS.Altitude', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.GPS.Data =                         HarpStream(230, device='TK', streamlabel='GPS.Data', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.GPS.Time =                         HarpStream(231, device='TK', streamlabel='GPS.Time', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.GPS.HasFix =                       HarpStream(232, device='TK', streamlabel='GPS.HasFix', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.GPS.Latitude =                     HarpStream(227, device='TK', streamlabel='GPS_Latitude', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.GPS.Longitude =                    HarpStream(228, device='TK', streamlabel='GPS_Longitude', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.GPS.Altitude =                     HarpStream(229, device='TK', streamlabel='GPS_Altitude', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.GPS.Data =                         HarpStream(230, device='TK', streamlabel='GPS_Data', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.GPS.Time =                         HarpStream(231, device='TK', streamlabel='GPS_Time', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.GPS.HasFix =                       HarpStream(232, device='TK', streamlabel='GPS_HasFix', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.AirQuality.IAQIndex =              HarpStream(233, device='TK', streamlabel='AirQuality.IAQIndex', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.AirQuality.Temperature =           HarpStream(234, device='TK', streamlabel='AirQuality.Temperature', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.AirQuality.Humidity =              HarpStream(235, device='TK', streamlabel='AirQuality.Humidity', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.AirQuality.AirPressure =           HarpStream(236, device='TK', streamlabel='AirQuality.AirPressure', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.AirQuality.IAQIndex =              HarpStream(233, device='TK', streamlabel='AirQuality_IAQIndex', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.AirQuality.Temperature =           HarpStream(234, device='TK', streamlabel='AirQuality_Temperature', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.AirQuality.Humidity =              HarpStream(235, device='TK', streamlabel='AirQuality_Humidity', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.AirQuality.AirPressure =           HarpStream(236, device='TK', streamlabel='AirQuality_AirPressure', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.SoundPressureLevel.SPL =           HarpStream(237, device='TK', streamlabel='SoundPressureLevel.SPL', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.SoundPressureLevel.SPL =           HarpStream(237, device='TK', streamlabel='SoundPressureLevel_SPL', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.Humidity.Humidity =                HarpStream(238, device='TK', streamlabel='Humidity.Humidity', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.Humidity.Humidity =                HarpStream(238, device='TK', streamlabel='Humidity_Humidity', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.AnalogIn.Voltage =                 HarpStream(239, device='TK', streamlabel='AnalogIn.Voltage', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.AnalogIn.Voltage =                 HarpStream(239, device='TK', streamlabel='AnalogIn_Voltage', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.ParticulateMatter.PM1_0 =          HarpStream(240, device='TK', streamlabel='ParticulateMatter.PM1_0', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.ParticulateMatter.PM2_5 =          HarpStream(241, device='TK', streamlabel='ParticulateMatter.PM2_5', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.TK.ParticulateMatter.PM10_0 =         HarpStream(242, device='TK', streamlabel='ParticulateMatter.PM10_0', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.ParticulateMatter.PM1_0 =          HarpStream(240, device='TK', streamlabel='ParticulateMatter_PM1_0', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.ParticulateMatter.PM2_5 =          HarpStream(241, device='TK', streamlabel='ParticulateMatter_PM2_5', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.ParticulateMatter.PM10_0 =         HarpStream(242, device='TK', streamlabel='ParticulateMatter_PM10_0', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.Dual0_20mA.SolarLight =      	  HarpStream(243, device='TK', streamlabel='Dual0_20mA.SolarLight', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.Dual0_20mA.SolarLight =      	  HarpStream(243, device='TK', streamlabel='Dual0_20mA_SolarLight', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.Thermocouple.Temperature =      	  HarpStream(244, device='TK', streamlabel='Thermocouple.Temperature', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.Thermocouple.Temperature =      	  HarpStream(244, device='TK', streamlabel='Thermocouple_Temperature', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
-    streams.TK.PTC.AirTemp =      	  			  HarpStream(245, device='TK', streamlabel='PTC.AirTemp', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.TK.PTC.AirTemp =      	  			  HarpStream(245, device='TK', streamlabel='PTC_AirTemp', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     # ATMOS streams
     streams.Atmos.NorthWind =               	  HarpStream(246, device='Atmos', streamlabel='NorthWind', root=root, autoload=autoload, parent_dataset=parent_dataset)
@@ -94,12 +94,12 @@ def custom_schema(root: Union[str, ComplexPath],
     #streams.EEG =                                  EegStream(device='Enobio', streamlabel='EEG', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     # PupilLabs streams
-    streams.PupilLabs.Counter.DecodedFrames =     HarpStream(209, device='PupilLabs', streamlabel='Counter.DecodedFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.PupilLabs.Counter.RawFrames =         HarpStream(210, device='PupilLabs', streamlabel='Counter.RawFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.PupilLabs.Counter.IMU =               HarpStream(211, device='PupilLabs', streamlabel='Counter.IMU', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.PupilLabs.Counter.Gaze =              HarpStream(212, device='PupilLabs', streamlabel='Counter.Gaze', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.PupilLabs.Counter.Audio =             HarpStream(213, device='PupilLabs', streamlabel='Counter.Audio', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.PupilLabs.Counter.Key =               HarpStream(214, device='PupilLabs', streamlabel='Counter.Key', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.DecodedFrames =     HarpStream(209, device='PupilLabs', streamlabel='Counter_DecodedFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.RawFrames =         HarpStream(210, device='PupilLabs', streamlabel='Counter_RawFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.IMU =               HarpStream(211, device='PupilLabs', streamlabel='Counter_IMU', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.Gaze =              HarpStream(212, device='PupilLabs', streamlabel='Counter_Gaze', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.Audio =             HarpStream(213, device='PupilLabs', streamlabel='Counter_Audio', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.Key =               HarpStream(214, device='PupilLabs', streamlabel='Counter_Key', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     return streams
 
