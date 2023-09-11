@@ -35,14 +35,23 @@ def load_dataset(root, schema, reload=True, export_path=None):
 
     return dataset
 
-def slice_segments(dataset, slice_dt='5min'):
-    df = dataset.georeference.elevation.resample(slice_dt).count()
-    return (slice(start,end) for i, (start, end) in enumerate(zip(df.index,df.index[1:])))
+def eeg_segments(dataset):
+    eeg_time = dataset.streams.EEG.data.np_time
+    eeg_markers = dataset.streams.EEG.server_lsl_marker
 
-def path_segment_indices(dataset, segment_dt='5min'):
-    blocks = dataset.georeference.elevation.resample(segment_dt)
-    return concat((DataFrame([i] * len(data), index=data.index, columns=['segment'])
-                   for i, (_, data) in enumerate(blocks)))
+    trial_markers = eeg_markers[eeg_markers.MarkerIdx > 35200]
+    trial_id = trial_markers.MarkerIdx - 35200
+
+    trial_ids = concat([trial_markers.Seconds, trial_id], axis=1)
+    row0 = DataFrame([(eeg_time[0], 0)], columns=trial_ids.columns)
+    trials = concat([row0, trial_ids], axis=0, ignore_index=True)
+    return trials.set_index('Seconds')
+
+def periodic_segments(dataset, slice_dt='5min'):
+    df = dataset.georeference.elevation.resample(slice_dt).count()
+    segments = DataFrame((marker for marker in df.index), columns=['Seconds'])
+    segments['MarkerIdx'] = segments.index
+    return segments.set_index('Seconds')
 
 def plot_stream(stream):
     stream.plot()
@@ -69,15 +78,21 @@ def plot_traces(traces, segments=None, figsize = (10,4)):
     fig.set_size_inches(figsize)
 
     if segments is None:
-        segments = [(slice(None, None, None), [0.1, 0.1, 0.1])]
+        segments = [(None, [0.1, 0.1, 0.1])]
 
-    for (segment, color) in segments:
+    for si in range(len(segments)):
+        marker, color = segments[si]
+        end, _ = segments[si + 1] if si < len(segments)-1 else (None, None)
         for i, (label, data) in enumerate(traces.items()):
+            segment = slice(marker, end)
             if isinstance(data, NedfReader):
                 eeg_time = DataFrame(arange(len(data.np_time)), index=data.np_time)
                 eeg_segment = eeg_time.loc[segment].values.ravel()
                 axs[i].set_prop_cycle(None)
-                axs[i].plot(data.np_time[eeg_segment], data.np_eeg[eeg_segment], lw = 0.5)
+                axs[i].plot(data.np_time[eeg_segment],
+                            data.np_eeg[eeg_segment],
+                            c = color,
+                            lw = 0.5)
             else:
                 axs[i].plot(data.loc[segment], c = color, lw = 0.5)
             axs[i].set_ylabel(label)
