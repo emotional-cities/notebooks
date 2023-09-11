@@ -3,6 +3,7 @@ dependencies:
   - jupyter
   - matplotlib
   - geopandas
+  - opencv
   - pip
   - pip:
     - tilemapbase

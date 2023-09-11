@@ -1,12 +1,14 @@
 from datetime import timedelta
 from matplotlib import pyplot as plt
 from pandas import DataFrame, concat
-from numpy import arange, ndarray
 from pluma.schema import Dataset
 from pluma.stream.georeference import Georeference
 from pluma.stream.eeg import NedfReader
 from pluma.preprocessing.resampling import resample_temporospatial
 from pluma.export.maps import showmap
+from pluma.io.path_helper import ensure_complexpath
+import numpy as np
+import cv2 as cv
 
 def load_dataset(root, schema, reload=True, export_path=None):
     # Path to the dataset. Can be local or remote.
@@ -86,7 +88,7 @@ def plot_traces(traces, segments=None, figsize = (10,4)):
         for i, (label, data) in enumerate(traces.items()):
             segment = slice(marker, end)
             if isinstance(data, NedfReader):
-                eeg_time = DataFrame(arange(len(data.np_time)), index=data.np_time)
+                eeg_time = DataFrame(np.arange(len(data.np_time)), index=data.np_time)
                 eeg_segment = eeg_time.loc[segment].values.ravel()
                 axs[i].set_prop_cycle(None)
                 axs[i].plot(data.np_time[eeg_segment],
@@ -99,3 +101,30 @@ def plot_traces(traces, segments=None, figsize = (10,4)):
     fig.supxlabel('Time')
     fig.align_ylabels()
     fig.show()
+
+def load_pupilvideo(dataset):
+    root_path = ensure_complexpath(dataset.rootfolder)
+    root_path.join('pupil_video.avi')
+    return cv.VideoCapture(root_path.path)
+
+def load_pupilgaze(dataset):
+    root_path = ensure_complexpath(dataset.rootfolder)
+    root_path.join('PupilLabs')
+    root_path.join('Gaze_Frame2.bin')
+
+    with root_path.open('rb') as stream:
+        data = np.frombuffer(stream.read(), dtype=np.float32).reshape((-1, 2))
+    frame_counter = dataset.streams.PupilLabs.Counter.Gaze.data
+    data = DataFrame(data, columns=['x', 'y'])
+    data.index = frame_counter.index
+    return data
+
+def reindex_pupilgaze(dataset, gaze):
+    # drop duplicate timestamps
+    gaze = gaze.groupby(gaze.index).first()
+    decoded_frames = dataset.streams.PupilLabs.Counter.DecodedFrames.data
+    decoded_frames = decoded_frames[decoded_frames.Value > 0] # drop null frames
+    gaze = gaze.reindex(decoded_frames.index, method='pad')
+    gaze['frame'] = np.arange(len(gaze))
+    location = dataset.georeference.spacetime.reindex(gaze.index, method='nearest')
+    return gaze.join(location)
