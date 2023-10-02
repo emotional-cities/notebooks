@@ -4,7 +4,6 @@ from pandas import DataFrame, concat
 from pluma.schema import Dataset
 from pluma.stream.georeference import Georeference
 from pluma.stream.eeg import NedfReader
-from pluma.preprocessing.resampling import resample_temporospatial
 from pluma.export.maps import showmap
 from pluma.io.path_helper import ensure_complexpath
 import numpy as np
@@ -32,7 +31,7 @@ def load_dataset(root, schema, reload=True, export_path=None):
             dataset.export_dataset(filename=f"{export_path}\dataset.pickle")
 
     else:
-        dataset = Dataset.import_dataset(f"{root}\dataset.pickle") 
+        dataset = Dataset.import_dataset(f"{root}\dataset.pickle")
         # ... and reimport it at a later point.
 
     return dataset
@@ -94,7 +93,8 @@ def plot_traces(traces, segments=None, figsize = (10,4)):
                 axs[i].plot(data.np_time[eeg_segment],
                             data.np_eeg[eeg_segment],
                             c = color,
-                            lw = 0.5)
+                            lw = 0.5,
+                            alpha=0.3)
             else:
                 axs[i].plot(data.loc[segment], c = color, lw = 0.5)
             axs[i].set_ylabel(label)
@@ -128,3 +128,16 @@ def reindex_pupilgaze(dataset, gaze):
     gaze['frame'] = np.arange(len(gaze))
     location = dataset.georeference.spacetime.reindex(gaze.index, method='nearest')
     return gaze.join(location)
+
+def plot_example_traces(dataset, traces, **kwargs):
+    segment_colors = np.array(['red', 'green', 'magenta', 'black', 'blue'])
+    marker_segments = eeg_segments(dataset)
+
+    path_segments = marker_segments.reindex(
+        dataset.georeference.elevation.index,
+        method='pad').MarkerIdx.fillna(0).astype('int')
+    plot_path(dataset, colorscale_override=segment_colors[path_segments], **kwargs)
+
+    segments = [(x, segment_colors[idx % len(segment_colors)])
+                for (x, idx) in marker_segments.reset_index().values]
+    plot_traces(traces, segments, figsize=(4.5,8))
