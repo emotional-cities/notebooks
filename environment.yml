@@ -9,3 +9,4 @@ dependencies:
     - tilemapbase
     - pluma-analysis
     - ipympl
+    - opencv-python
