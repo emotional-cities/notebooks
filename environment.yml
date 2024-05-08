@@ -1,11 +1,10 @@
 name: .conda
 dependencies:
   - jupyter
-  - ipyfilechooser
   - matplotlib
   - geopandas
-  - opencv
   - pip
   - pip:
-    - tilemapbase
+    - ipyfilechooser
+    - opencv-python
     - pluma-analysis
