@@ -1,5 +1,5 @@
 import os
-from IPython.display import clear_output
+from IPython.display import clear_output, display
 from ipyfilechooser import FileChooser
 from ipywidgets import interact, interactive, fixed, interact_manual
 import ipywidgets as widgets
@@ -38,6 +38,7 @@ mpl.rcParams.update(new_rc_params)
 def create_datapicker():
     def dataset_changed(chooser):
         clear_output(wait=False)
+        display(chooser)
         print(f"Loading dataset: {Path(chooser.selected_path).name}..." )
         dataset = load_dataset(chooser.selected_path, schema=custom_schema)
         print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated." )
