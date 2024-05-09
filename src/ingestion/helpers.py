@@ -165,3 +165,29 @@ def plot_example_traces(dataset, traces, **kwargs):
     segments = [(x, segment_colors[idx % len(segment_colors)])
                 for (x, idx) in marker_segments.reset_index().values]
     plot_traces(traces, segments, figsize=(4.5,8))
+
+def diff_stats(stream, start=100, end=200, xlabel='Time', ylabel=''):
+    try:
+        diff_series = stream.data.index.to_series().diff().dropna().astype(np.int64) / int(1e6)
+        # stats = diff_series.describe()
+        mini = diff_series[1:].min()
+        maxi = diff_series[1:].max()
+        meani = diff_series[1:].mean()
+        medi = diff_series[1:].median()
+        if medi == 0:
+            medi = 0.0000000000001
+        print(f'Minimum = {mini}; Maximum = {maxi}; Mean = {meani}; Median = {medi}; FrameRate = {1000/medi}') 
+
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+
+        axs[0].plot(diff_series)
+        axs[0].set_title(stream.streamlabel + ' Time Difference')
+        axs[0].set_ylabel('Time Difference (ms)')
+        axs[0].set_xlabel(stream.data.index.name)
+
+        stream.data.plot(ax=axs[1], title=stream.streamlabel)
+
+        print(diff_series[start:end])
+    except:
+        clear_output(wait=False)
+    return diff_series
