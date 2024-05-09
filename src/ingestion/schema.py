@@ -7,6 +7,8 @@ from pluma.stream.empatica import EmpaticaStream
 from pluma.stream.ubx import UbxStream, _UBX_MSGIDS
 from pluma.stream.microphone import MicrophoneStream
 from pluma.stream.eeg import EegStream
+from pluma.stream.zeromq import PupilGazeStream
+from pluma.stream.zeromq import PupilWorldCameraStream
 
 from pluma.io.path_helper import ComplexPath, ensure_complexpath
 
@@ -91,9 +93,11 @@ def custom_schema(root: Union[str, ComplexPath],
                                                                 ])
 
     # EEG stream
-    streams.EEG =                                  EegStream(device='Enobio', streamlabel='EEG', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.EEG =                                 EegStream(device='Enobio', streamlabel='EEG', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
     # PupilLabs streams
+    streams.PupilLabs.Gaze =                      PupilGazeStream(device='PupilLabs', streamlabel='Gaze', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.WorldCamera =               PupilWorldCameraStream(device='PupilLabs', streamlabel='WorldCamera', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.PupilLabs.Counter.DecodedFrames =     HarpStream(209, device='PupilLabs', streamlabel='Counter_DecodedFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.PupilLabs.Counter.RawFrames =         HarpStream(210, device='PupilLabs', streamlabel='Counter_RawFrames', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.PupilLabs.Counter.IMU =               HarpStream(211, device='PupilLabs', streamlabel='Counter_IMU', root=root, autoload=autoload, parent_dataset=parent_dataset)
