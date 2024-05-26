@@ -4,6 +4,7 @@ dependencies:
   - matplotlib
   - geopandas
   - pip
+  - ipympl
   - pip:
     - ipyfilechooser
     - opencv-python
