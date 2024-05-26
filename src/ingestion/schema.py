@@ -7,6 +7,7 @@ from pluma.stream.empatica import EmpaticaStream
 from pluma.stream.ubx import UbxStream, _UBX_MSGIDS
 from pluma.stream.microphone import MicrophoneStream
 from pluma.stream.eeg import EegStream
+from pluma.stream.zeromq import PupilGazeStream
 
 from pluma.io.path_helper import ComplexPath, ensure_complexpath
 
@@ -99,7 +100,9 @@ def custom_schema(root: Union[str, ComplexPath],
     streams.PupilLabs.Counter.IMU =               HarpStream(211, device='PupilLabs', streamlabel='Counter_IMU', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.PupilLabs.Counter.Gaze =              HarpStream(212, device='PupilLabs', streamlabel='Counter_Gaze', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.PupilLabs.Counter.Audio =             HarpStream(213, device='PupilLabs', streamlabel='Counter_Audio', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.PupilLabs.Counter.Key =               HarpStream(214, device='PupilLabs', streamlabel='Counter_Key', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.PupilLabs.Counter.Key =               HarpStream(214, device='PupilLabs', streamlabel='Counter_Key', root=root, autoload=autoload, parent_dataset=parent_dataset) 
+    streams.PupilLabs.PupilGaze  =                PupilGazeStream(device = 'PupilLabs', streamlabel='Pupil_Gaze', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    
 
     return streams
 
