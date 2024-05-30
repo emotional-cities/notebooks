@@ -3,6 +3,7 @@ dependencies:
   - jupyter
   - matplotlib
   - geopandas
+  - ipympl
   - pip
   - pip:
     - ipyfilechooser
