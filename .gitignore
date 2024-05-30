@@ -5,3 +5,9 @@ cache
 .env
 .vscode
 .conda
+
+## Data files
+*.avi
+*.csv
+*.json
+*.geojson
