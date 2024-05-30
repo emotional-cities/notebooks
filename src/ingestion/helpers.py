@@ -76,7 +76,7 @@ def plot_summary(dataset):
     dataset.showmap(
         fig=fig,
         ax=map_ax)
-    fig.show()
+    plt.show()
 
 def plot_stream(stream):
     stream.plot()
@@ -90,12 +90,12 @@ def plot_path(dataset, sampling_dt=timedelta(seconds=2), colorscale_override=Non
         cmap = "jet",
         **kwargs)
     fig.get_axes()[0].set_title(dataset.datasetlabel)
-    fig.show()
+    plt.show()
 
 def plot_geospatial(data, sampling_dt=timedelta(seconds=2), **kwargs):
     fig = showmap(data, **kwargs)
     fig.get_axes()[0].set_title(kwargs.get('title', 'Data'))
-    fig.show()
+    plt.show()
 
 def plot_traces(traces, segments=None, figsize = (10,4)):
     ## Plot it in time for comparison
@@ -124,7 +124,7 @@ def plot_traces(traces, segments=None, figsize = (10,4)):
             axs[i].set_ylabel(label)
     fig.supxlabel('Time')
     fig.align_ylabels()
-    fig.show()
+    plt.show()
 
 def load_pupilvideo(dataset):
     root_path = ensure_complexpath(dataset.rootfolder)
