@@ -3,8 +3,9 @@ dependencies:
   - jupyter
   - matplotlib
   - geopandas
-  - opencv
+  - ipympl
   - pip
   - pip:
-    - tilemapbase
+    - ipyfilechooser
+    - opencv-python
     - pluma-analysis
