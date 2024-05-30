@@ -35,6 +35,9 @@ new_rc_params = {
 import matplotlib as mpl
 mpl.rcParams.update(new_rc_params)
 
+## Ensure tilemapbase cache is initialized
+tmb.init(create=True)
+
 def create_datapicker():
     def dataset_changed(chooser):
         clear_output(wait=False)
