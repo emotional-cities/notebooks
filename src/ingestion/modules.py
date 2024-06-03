@@ -40,15 +40,10 @@ tmb.init(create=True)
 
 def create_datapicker():
     def dataset_changed(chooser):
-        clear_output(wait=False)
         display(chooser)
         print(f"Loading dataset: {Path(chooser.selected_path).name}..." )
-        dataset = load_dataset(chooser.selected_path, schema=custom_schema)
-        print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated." )
-        plot_summary(dataset)
-        chooser.dataset = dataset
-        chooser.geodata = dataset.to_geoframe()
-
+        create_dataset(path= chooser.selected_path, datapicker=chooser)
+        
     datapicker = FileChooser(
         os.getcwd(),
         title='<b>Select the Dataset folder</b>',
@@ -58,3 +53,12 @@ def create_datapicker():
     )
     datapicker.register_callback(dataset_changed)
     return datapicker
+
+
+def create_dataset(datapicker = None):
+    clear_output(wait=False)
+    dataset = load_dataset(datapicker.selected_path, schema=custom_schema)
+    print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated." )
+    plot_summary(dataset)
+    datapicker.dataset = dataset
+    datapicker.geodata = dataset.to_geoframe()
