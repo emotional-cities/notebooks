@@ -12,7 +12,7 @@ from pluma.sync.plotting import plot_clockcalibration_diagnosis
 import numpy as np
 import cv2 as cv
 
-def load_dataset(root, schema, reload=True, export_path=None):
+def load_dataset(root, schema, reload=True, ubx=True, export_path=None):
     # Path to the dataset. Can be local or remote.
     dataset = Dataset(
         root=root,
@@ -25,10 +25,11 @@ def load_dataset(root, schema, reload=True, export_path=None):
         # We will just load every single stream at the same time. This might take a while if loading from AWS
         # Some warnings will be printed if some sensors were not acquired during the experiment. These are normal and can be usually ignored.
         dataset.reload_streams(force_load=True)
-        sync_lookup = dataset.calibrate_ubx_to_harp()
-        dataset.add_ubx_georeference()
-        dataset.reference_harp_to_ubx_time()
-        dataset.sync_lookup = sync_lookup
+        if ubx:
+            sync_lookup = dataset.calibrate_ubx_to_harp()
+            dataset.add_ubx_georeference()
+            dataset.reference_harp_to_ubx_time()
+            dataset.sync_lookup = sync_lookup
 
 
         if export_path is not None:

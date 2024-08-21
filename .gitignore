@@ -11,3 +11,6 @@ cache
 *.csv
 *.json
 *.geojson
+
+## Local config giles
+ingestion.config

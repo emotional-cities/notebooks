@@ -38,16 +38,26 @@ mpl.rcParams.update(new_rc_params)
 ## Ensure tilemapbase cache is initialized
 tmb.init(create=True)
 
-def create_datapicker(path=os.getcwd()):
+def create_datapicker(path=None, show_summary=True, ubx=True, create_geodata=True, schema=custom_schema):
     def dataset_changed(chooser):
         clear_output(wait=False)
         display(chooser)
         print(f"Loading dataset: {Path(chooser.selected_path).name}..." )
-        dataset = load_dataset(chooser.selected_path, schema=custom_schema)
-        print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated." )
-        plot_summary(dataset)
+        dataset = load_dataset(chooser.selected_path, ubx=ubx, schema=schema)
+        print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated.")
         chooser.dataset = dataset
-        chooser.geodata = dataset.to_geoframe()
+        if show_summary:
+            plot_summary(dataset)
+        if create_geodata:
+            chooser.geodata = dataset.to_geoframe()
+
+    if path is None:
+        config_path = Path(__file__).parent.absolute() / 'ingestion.config'
+        if config_path.exists():
+            with open(config_path) as config:
+                path = config.read()
+        else:
+            path =  os.getcwd()
 
     datapicker = FileChooser(
         path=path,
