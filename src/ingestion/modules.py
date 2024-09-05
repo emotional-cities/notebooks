@@ -38,7 +38,7 @@ mpl.rcParams.update(new_rc_params)
 ## Ensure tilemapbase cache is initialized
 tmb.init(create=True)
 
-def create_datapicker():
+def create_datapicker(path=os.getcwd()):
     def dataset_changed(chooser):
         clear_output(wait=False)
         display(chooser)
@@ -50,7 +50,7 @@ def create_datapicker():
         chooser.geodata = dataset.to_geoframe()
 
     datapicker = FileChooser(
-        os.getcwd(),
+        path=path,
         title='<b>Select the Dataset folder</b>',
         show_hidden=False,
         select_default=True,
