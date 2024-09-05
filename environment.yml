@@ -8,4 +8,4 @@ dependencies:
   - pip:
     - ipyfilechooser
     - opencv-python
-    - pluma-analysis
+    - git+https://github.com/emotional-cities/pluma-analysis.git@cf989d06e687198c291c375f9a4a1c71a0ae3c77
