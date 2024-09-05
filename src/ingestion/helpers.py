@@ -166,3 +166,6 @@ def plot_example_traces(dataset, traces, **kwargs):
     segments = [(x, segment_colors[idx % len(segment_colors)])
                 for (x, idx) in marker_segments.reset_index().values]
     plot_traces(traces, segments, figsize=(4.5,8))
+
+def coordinate_transform(x, in_min, in_max, out_min, out_max):
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
