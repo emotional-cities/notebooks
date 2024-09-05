@@ -5,7 +5,7 @@ from matplotlib.gridspec import GridSpec
 from pandas import DataFrame, concat
 from pluma.schema import Dataset
 from pluma.stream.georeference import Georeference
-from pluma.stream.eeg import NedfReader
+from pluma.stream.eeg import Raw
 from pluma.export.maps import showmap
 from pluma.io.path_helper import ensure_complexpath
 from pluma.sync.plotting import plot_clockcalibration_diagnosis
@@ -110,7 +110,7 @@ def plot_traces(traces, segments=None, figsize = (10,4)):
         end, _ = segments[si + 1] if si < len(segments)-1 else (None, None)
         for i, (label, data) in enumerate(traces.items()):
             segment = slice(marker, end)
-            if isinstance(data, NedfReader):
+            if isinstance(data, Raw):
                 eeg_time = DataFrame(np.arange(len(data.np_time)), index=data.np_time)
                 eeg_segment = eeg_time.loc[segment].values.ravel()
                 axs[i].set_prop_cycle(None)

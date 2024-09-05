@@ -7,6 +7,8 @@ from pluma.stream.empatica import EmpaticaStream
 from pluma.stream.ubx import UbxStream, _UBX_MSGIDS
 from pluma.stream.microphone import MicrophoneStream
 from pluma.stream.eeg import EegStream
+from pluma.stream.ecg import EcgStream
+from pluma.stream.zeromq import PupilGazeStream
 
 from pluma.io.path_helper import ComplexPath, ensure_complexpath
 
@@ -28,7 +30,7 @@ def custom_schema(root: Union[str, ComplexPath],
     # BioData streams
     streams.BioData.EnableStreams =               HarpStream(32, device='BioData', streamlabel='EnableStreams', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.BioData.DisableStreams =              HarpStream(33, device='BioData', streamlabel='DisableStreams', root=root, autoload=autoload, parent_dataset=parent_dataset)
-    streams.BioData.ECG =                         HarpStream(35, device='BioData', streamlabel='ECG', root=root, autoload=autoload, parent_dataset=parent_dataset)
+    streams.BioData.ECG =                         EcgStream (35, device='ECG', streamlabel='ECG', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.BioData.GSR =                         HarpStream(36, device='BioData', streamlabel='GSR', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.BioData.Accelerometer =               HarpStream(37, device='BioData', streamlabel='Accelerometer', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.BioData.DigitalIn =                   HarpStream(38, device='BioData', streamlabel='DigitalIn', root=root, autoload=autoload, parent_dataset=parent_dataset)
@@ -101,6 +103,7 @@ def custom_schema(root: Union[str, ComplexPath],
     streams.PupilLabs.Counter.Audio =             HarpStream(213, device='PupilLabs', streamlabel='Counter_Audio', root=root, autoload=autoload, parent_dataset=parent_dataset)
     streams.PupilLabs.Counter.Key =               HarpStream(214, device='PupilLabs', streamlabel='Counter_Key', root=root, autoload=autoload, parent_dataset=parent_dataset)
 
+    streams.PupilLabs.PupilGaze  =                PupilGazeStream(212, device = 'PupilLabs', streamlabel='Pupil_Gaze', root=root, autoload=autoload, parent_dataset=parent_dataset)
     return streams
 
 
