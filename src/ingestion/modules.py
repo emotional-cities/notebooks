@@ -17,7 +17,8 @@ from pluma.preprocessing.ecg import heartrate_from_ecg
 from pluma.export.ogcapi.records import DatasetRecord, RecordProperties, Contact
 from pluma.stream.georeference import Georeference
 from pluma.stream.harp import HarpStream
-from pluma.stream.ubx import UbxStream, _UBX_MSGIDS, _UBX_CLASSES
+from pluma.stream.ubx import UbxStream
+from pluma.io.ubx import _UBX_MSGIDS, _UBX_CLASSES
 from pluma.schema import Dataset
 from schema import custom_schema
 from helpers import *
