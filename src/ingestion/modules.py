@@ -19,7 +19,7 @@ from pluma.stream.georeference import Georeference
 from pluma.stream.harp import HarpStream
 from pluma.stream.ubx import UbxStream
 from pluma.schema import Dataset
-from schema import custom_schema
+from schema import build_schema
 from helpers import *
 
 import warnings
@@ -38,7 +38,7 @@ mpl.rcParams.update(new_rc_params)
 ## Ensure tilemapbase cache is initialized
 tmb.init(create=True)
 
-def create_datapicker(path=None, show_summary=True, ubx=True, unity=False, create_geodata=True, schema=custom_schema):
+def create_datapicker(path=None, show_summary=True, ubx=True, unity=False, create_geodata=True, schema=build_schema):
     def dataset_changed(chooser):
         clear_output(wait=False)
         display(chooser)
