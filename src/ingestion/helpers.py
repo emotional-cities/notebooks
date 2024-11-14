@@ -12,7 +12,7 @@ from pluma.sync.plotting import plot_clockcalibration_diagnosis
 import numpy as np
 import cv2 as cv
 
-def load_dataset(root, schema, reload=True, ubx=True, unity=False, export_path=None):
+def load_dataset(root, schema, reload=True, ubx=True, unity=False, calibrate_ubx_to_harp=True, export_path=None):
     # Path to the dataset. Can be local or remote.
     dataset = Dataset(
         root=root,
@@ -26,10 +26,15 @@ def load_dataset(root, schema, reload=True, ubx=True, unity=False, export_path=N
         # Some warnings will be printed if some sensors were not acquired during the experiment. These are normal and can be usually ignored.
         dataset.reload_streams(force_load=True)
         if ubx:
-            sync_lookup = dataset.calibrate_ubx_to_harp()
-            dataset.add_ubx_georeference()
-            dataset.reference_harp_to_ubx_time()
-            dataset.sync_lookup = sync_lookup
+            if calibrate_ubx_to_harp:
+                sync_lookup = dataset.calibrate_ubx_to_harp()
+                dataset.add_ubx_georeference()
+                dataset.reference_harp_to_ubx_time()
+                dataset.sync_lookup = sync_lookup
+            else:
+                dataset.add_ubx_georeference(calibrate_clock=False)
+                dataset.has_calibration = True
+                dataset.reference_harp_to_ubx_time()
 
         if unity:
             unity_transform = dataset.streams.Unity.Transform
@@ -66,18 +71,23 @@ def periodic_segments(dataset, slice_dt='5min'):
     segments['MarkerIdx'] = segments.index
     return segments.set_index('Seconds')
 
-def plot_summary(dataset):
-    sync_lookup = dataset.sync_lookup
-    fig = plt.figure(figsize=(10, 8))
-    gs = GridSpec(3, 2, hspace=0.5, figure=fig)
-    idx_ax = fig.add_subplot(gs[0, 0])
-    scatter_ax = fig.add_subplot(gs[0, 1])
-    map_ax = fig.add_subplot(gs[1:, :])
-    plot_clockcalibration_diagnosis(
-        sync_lookup.ubx_ts,
-        sync_lookup.harp_ts,
-        sync_lookup.align_lookup,
-        axes=(idx_ax, scatter_ax))
+def plot_summary(dataset, plot_sync_lookup=True):
+    if plot_sync_lookup:
+        sync_lookup = dataset.sync_lookup
+        fig = plt.figure(figsize=(10, 8))
+        gs = GridSpec(3, 2, hspace=0.5, figure=fig)
+        idx_ax = fig.add_subplot(gs[0, 0])
+        scatter_ax = fig.add_subplot(gs[0, 1])
+        map_ax = fig.add_subplot(gs[1:, :])
+        plot_clockcalibration_diagnosis(
+            sync_lookup.ubx_ts,
+            sync_lookup.harp_ts,
+            sync_lookup.align_lookup,
+            axes=(idx_ax, scatter_ax))
+    else:
+        fig = plt.figure(figsize=(10, 4))
+        gs = GridSpec(1, 1, hspace=0.5, figure=fig)
+        map_ax = fig.add_subplot(gs[0, 0])
     dataset.showmap(
         fig=fig,
         ax=map_ax)

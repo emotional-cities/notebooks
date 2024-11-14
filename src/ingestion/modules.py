@@ -38,16 +38,16 @@ mpl.rcParams.update(new_rc_params)
 ## Ensure tilemapbase cache is initialized
 tmb.init(create=True)
 
-def create_datapicker(path=None, show_summary=True, ubx=True, unity=False, create_geodata=True, schema=build_schema):
+def create_datapicker(path=None, show_summary=True, ubx=True, unity=False, calibrate_ubx_to_harp=True, create_geodata=True, schema=build_schema):
     def dataset_changed(chooser):
         clear_output(wait=False)
         display(chooser)
         print(f"Loading dataset: {Path(chooser.selected_path).name}..." )
-        dataset = load_dataset(chooser.selected_path, ubx=ubx, unity=unity, schema=schema)
+        dataset = load_dataset(chooser.selected_path, ubx=ubx, unity=unity, calibrate_ubx_to_harp=calibrate_ubx_to_harp, schema=schema)
         print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated.")
         chooser.dataset = dataset
         if show_summary:
-            plot_summary(dataset)
+            plot_summary(dataset, plot_sync_lookup=calibrate_ubx_to_harp)
         if create_geodata:
             chooser.geodata = dataset.to_geoframe()
 
