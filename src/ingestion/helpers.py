@@ -12,7 +12,7 @@ from pluma.sync.plotting import plot_clockcalibration_diagnosis
 import numpy as np
 import cv2 as cv
 
-def load_dataset(root, schema, reload=True, ubx=True, export_path=None):
+def load_dataset(root, schema, reload=True, ubx=True, unity=False, export_path=None):
     # Path to the dataset. Can be local or remote.
     dataset = Dataset(
         root=root,
@@ -31,6 +31,10 @@ def load_dataset(root, schema, reload=True, ubx=True, export_path=None):
             dataset.reference_harp_to_ubx_time()
             dataset.sync_lookup = sync_lookup
 
+        if unity:
+            unity_transform = dataset.streams.Unity.Transform
+            unity_georeference = dataset.streams.Unity.Georeference
+            dataset.add_unity_georeference(unity_transform, unity_georeference)
 
         if export_path is not None:
             # We can export the dataset as a .pickle file.

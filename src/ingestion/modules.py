@@ -17,9 +17,9 @@ from pluma.preprocessing.ecg import heartrate_from_ecg
 from pluma.export.ogcapi.records import DatasetRecord, RecordProperties, Contact
 from pluma.stream.georeference import Georeference
 from pluma.stream.harp import HarpStream
-from pluma.stream.ubx import UbxStream, _UBX_MSGIDS, _UBX_CLASSES
+from pluma.stream.ubx import UbxStream
 from pluma.schema import Dataset
-from schema import custom_schema
+from schema import build_schema
 from helpers import *
 
 import warnings
@@ -38,12 +38,12 @@ mpl.rcParams.update(new_rc_params)
 ## Ensure tilemapbase cache is initialized
 tmb.init(create=True)
 
-def create_datapicker(path=None, show_summary=True, ubx=True, create_geodata=True, schema=custom_schema):
+def create_datapicker(path=None, show_summary=True, ubx=True, unity=False, create_geodata=True, schema=build_schema):
     def dataset_changed(chooser):
         clear_output(wait=False)
         display(chooser)
         print(f"Loading dataset: {Path(chooser.selected_path).name}..." )
-        dataset = load_dataset(chooser.selected_path, ubx=ubx, schema=schema)
+        dataset = load_dataset(chooser.selected_path, ubx=ubx, unity=unity, schema=schema)
         print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated.")
         chooser.dataset = dataset
         if show_summary:
