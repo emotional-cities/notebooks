@@ -47,7 +47,7 @@ def create_datapicker(path=None, show_summary=True, ubx=True, unity=False, calib
         print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated.")
         chooser.dataset = dataset
         if show_summary:
-            plot_summary(dataset, plot_sync_lookup=calibrate_ubx_to_harp)
+            plot_summary(dataset, plot_sync_lookup=ubx and calibrate_ubx_to_harp)
         if create_geodata:
             chooser.geodata = dataset.to_geoframe()
 
