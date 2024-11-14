@@ -98,7 +98,7 @@ def build_schema(root: Union[str, ComplexPath], parent_dataset=None, autoload: b
     streams.UBX =                           UbxStream(device="UBX", streamlabel="UBX", **kwargs,
                                                       autoload_messages=[
                                                           _UBX_MSGIDS.NAV_HPPOSLLH,
-                                                          _UBX_MSGIDS.TIM_TM2,
+                                                        #   _UBX_MSGIDS.TIM_TM2,
                                                           _UBX_MSGIDS.TIM_TP,
                                                       ])
 
