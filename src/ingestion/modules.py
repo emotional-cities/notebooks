@@ -19,7 +19,7 @@ from pluma.stream.georeference import Georeference
 from pluma.stream.harp import HarpStream
 from pluma.stream.ubx import UbxStream
 from pluma.schema import Dataset
-from schema import build_schema
+from pluma.schema.outdoor import build_schema
 from helpers import *
 
 import warnings
