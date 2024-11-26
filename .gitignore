@@ -8,9 +8,10 @@ cache
 
 ## Data files
 *.avi
+*.log
 *.csv
 *.json
 *.geojson
 
-## Local config giles
+## Local config files
 ingestion.config
