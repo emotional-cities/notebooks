@@ -15,8 +15,8 @@ import cv2 as cv
 def load_dataset(root, schema, reload=True, ubx=True, unity=False, calibrate_ubx_to_harp=True, export_path=None):
     # Path to the dataset. Can be local or remote.
     dataset = Dataset(
-        root=root,
-        datasetlabel="FMUL_" + root.split("\\")[-1],
+        root=str(root),
+        datasetlabel=root.name,
         georeference= Georeference(),
         schema=schema)  # Create a Dataset object that will contain the ingested data.
     dataset.populate_streams(autoload=False)  # Add the "schema" that we want to load to our Dataset. If we want to load the whole dataset automatically, set autoload to True.

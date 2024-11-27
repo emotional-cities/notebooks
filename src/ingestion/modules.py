@@ -42,8 +42,9 @@ def create_datapicker(path=None, show_summary=True, ubx=True, unity=False, calib
     def dataset_changed(chooser):
         clear_output(wait=False)
         display(chooser)
-        print(f"Loading dataset: {Path(chooser.selected_path).name}..." )
-        dataset = load_dataset(chooser.selected_path, ubx=ubx, unity=unity, calibrate_ubx_to_harp=calibrate_ubx_to_harp, schema=schema)
+        selected_path = Path(chooser.selected_path)
+        print(f"Loading dataset: {selected_path.name}..." )
+        dataset = load_dataset(selected_path, ubx=ubx, unity=unity, calibrate_ubx_to_harp=calibrate_ubx_to_harp, schema=schema)
         print(f"Dataset: {dataset} loaded successfully, and {'not' if not dataset.has_calibration else 'sucessfully'} calibrated.")
         chooser.dataset = dataset
         if show_summary:
