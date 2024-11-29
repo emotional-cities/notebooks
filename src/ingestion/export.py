@@ -76,6 +76,7 @@ if __name__ == "__main__":
                 export_geoframe_to_geojson(geodata, rpath.with_suffix('.geojson'))
                 with open(rpath.with_suffix('.json'), 'w', encoding="utf8") as f:
                     f.write(record.to_json())
+                break
             except Exception as error:
                 error_msg = f"Error exporting dataset: {path} with schema {schema_name}"
                 print(error_msg)
