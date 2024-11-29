@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from matplotlib import pyplot as plt
 from matplotlib import dates as mdates
 from matplotlib.gridspec import GridSpec
@@ -16,7 +16,7 @@ def load_dataset(root, schema, reload=True, ubx=True, unity=False, calibrate_ubx
     # Path to the dataset. Can be local or remote.
     dataset = Dataset(
         root=str(root),
-        datasetlabel=root.name,
+        datasetlabel=get_dataset_id(root.name),
         georeference= Georeference(),
         schema=schema)  # Create a Dataset object that will contain the ingested data.
     dataset.populate_streams(autoload=False)  # Add the "schema" that we want to load to our Dataset. If we want to load the whole dataset automatically, set autoload to True.
@@ -52,6 +52,19 @@ def load_dataset(root, schema, reload=True, ubx=True, unity=False, calibrate_ubx
         # ... and reimport it at a later point.
 
     return dataset
+
+def get_dataset_id(name):
+    attributes = name.split('_')
+    if len(attributes) < 2:
+        return name
+    
+    last_attribute = attributes[-1]
+    try:
+        _ = datetime.fromisoformat(last_attribute)
+        id = '_'.join(attributes[:-1])
+    except ValueError:
+        id = name
+    return id.lower()
 
 def eeg_segments(dataset):
     eeg_time = dataset.streams.EEG.data.np_time
