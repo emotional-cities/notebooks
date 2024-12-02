@@ -1,5 +1,7 @@
 name: .conda
 dependencies:
+  - python=3.11
+  - numpy=1.24.4
   - jupyter
   - matplotlib
   - geopandas
