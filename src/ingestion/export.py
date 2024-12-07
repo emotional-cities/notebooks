@@ -40,6 +40,7 @@ if __name__ == "__main__":
                         level=logging.DEBUG)
     parser = argparse.ArgumentParser(description="Exporter of standardized outdoor walks to OGC API records and GeoJSON datasets.")
     parser.add_argument('root', type=str, help="The path to the root folder containing datasets.")
+    parser.add_argument('--output', default="", type=str, help="Specify the optional path to the folder containing the exported datasets.")
     parser.add_argument('--contacts', type=str, help="The path to the JSON file specifying the list of contacts to include in the dataset.")
     parser.add_argument('--schema', nargs='*', type=str, help=
                         "Priority list of schemas to use for loading each dataset. If a dataset fails to load with the first schema," +
@@ -56,6 +57,10 @@ if __name__ == "__main__":
     schemas = [(name, supported_schemas[name]) for name in args.schema or ["outdoor"]]
 
     root = Path(args.root)
+    output = Path(args.output)
+    if not output.exists():
+        output.mkdir(parents=True)
+
     for match in root.glob("**/Streams_32"):
         for (schema_name, schema) in schemas:
             try:
@@ -71,7 +76,7 @@ if __name__ == "__main__":
                 geodata = dataset.to_geoframe()
 
                 record = to_ogcapi_records(dataset, geodata, city, region, subject_id, contacts=contacts)
-                rpath = Path(record.id)
+                rpath = output.joinpath(record.id)
                 export_geoframe_to_geojson(geodata, rpath.with_suffix('.geojson'))
                 with open(rpath.with_suffix('.json'), 'w', encoding="utf8") as f:
                     f.write(record.to_json())
