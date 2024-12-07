@@ -37,7 +37,6 @@ if __name__ == "__main__":
     logging.basicConfig(filename="export.log",
                         filemode="a",
                         format='%(asctime)s %(name)s %(levelname)s %(message)s',
-                        datefmt='%H:%M:%S',
                         level=logging.DEBUG)
     parser = argparse.ArgumentParser(description="Exporter of standardized outdoor walks to OGC API records and GeoJSON datasets.")
     parser.add_argument('root', type=str, help="The path to the root folder containing datasets.")
