@@ -1,4 +1,6 @@
 def empatica_and_ecg_to_csv(datapicker, outdir):
+
+    from pluma.preprocessing.ecg import heartrate_from_ecg
     
     # Process datapicker
     lsl_markers = datapicker.dataset.streams.EEG.server_lsl_marker[datapicker.dataset.streams.EEG.server_lsl_marker.MarkerIdx>35000]
