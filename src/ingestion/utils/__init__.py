@@ -4,4 +4,5 @@ from .for_climate import *
 from .for_eeg import *
 from .for_empatica import *
 from .for_eye_tracker import *
+from .for_path_info import *
 # import importlib

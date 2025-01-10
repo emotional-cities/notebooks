@@ -1,37 +1,51 @@
-import numpy as np
-import pandas as pd
-from pythermalcomfort.models import utci, solar_gain
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                              IMPORT LIBRARIES                                 #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-def tidy_geodata(geodf):
+import matplotlib.pyplot as plt
+import numpy as np
+from pythermalcomfort.models import utci, solar_gain
+import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Point
+from shapely.ops import nearest_points
+import os
+import glob
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                          PROCESSING FUNCTIONS                                 #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+def tidy_geodata(df):
 
     """Tidy variables in geodata."""
     
     # Define custom parameters
-    humidity = geodf['tk_humidity_humidity_value'] / 100  # in fraction
-    wind_speed = np.sqrt(geodf['atmos_northwind_value']**2 + geodf['atmos_eastwind_value']**2)  # m/s (~2.5 m of elevation)
-    temp_atmos = geodf['atmos_airtemperature_value']  # in ºC
-    temp_tk = geodf['tk_airquality_temperature_value'] / 100  # in ºC
-    temp_tk_ptc = geodf['tk_ptc_airtemp_value'] / 100  # in ºC
-    temp_radiant = geodf['tk_thermocouple_temperature_value'] / 100  # in ºC
+    humidity = df['tk_humidity_humidity_value'] / 100  # in fraction
+    wind_speed = np.sqrt(df['atmos_northwind_value']**2 + df['atmos_eastwind_value']**2)  # m/s (~2.5 m of elevation)
+    temp_atmos = df['atmos_airtemperature_value']  # in ºC
+    temp_tk = df['tk_airquality_temperature_value'] / 100  # in ºC
+    temp_tk_ptc = df['tk_ptc_airtemp_value'] / 100  # in ºC
+    temp_radiant = df['tk_thermocouple_temperature_value'] / 100  # in ºC
 
-    # Assign custom parameters to the geodf attribute
-    geodf['humidity'] = humidity
-    geodf['wind_speed'] = wind_speed
-    geodf['temp_atmos'] = temp_atmos
-    geodf['temp_tk'] = temp_tk
-    geodf['temp_tk_ptc'] = temp_tk_ptc
-    geodf['temp_radiant'] = temp_radiant
+    # Assign custom parameters to the df attribute
+    df['humidity'] = humidity
+    df['wind_speed'] = wind_speed
+    df['temp_atmos'] = temp_atmos
+    df['temp_tk'] = temp_tk
+    df['temp_tk_ptc'] = temp_tk_ptc
+    df['temp_radiant'] = temp_radiant
 
     # Compute the UTCI
-    geodf['utci'] = utci(tdb=temp_atmos, tr=temp_radiant, v=wind_speed, rh=humidity)
+    df['utci'] = utci(tdb=temp_atmos, tr=temp_radiant, v=wind_speed, rh=humidity)
 
-    # Get GPS coordinates and integrate them into geodf
-    coords = geodf.geometry.get_coordinates(include_z=True)
+    # Get GPS coordinates and integrate them into df
+    coords = df.geometry.get_coordinates(include_z=True)
     # Optionally rename the coordinate columns
     coords.rename(columns={'y': 'latitude', 'x': 'longitude', 'z': 'elevation'}, inplace=True)
-    geodf = geodf.join(coords).drop(columns=['geometry'])
+    df = df.join(coords).drop(columns=['geometry'])
 
-    return geodf
+    return df
 
 
 def add_environmental_metrics(df):
@@ -224,3 +238,87 @@ def add_environmental_metrics(df):
 
     return df
 
+
+def correct_gps_data(df, shp_path):
+    """
+    Correct GPS coordinates by snapping points to the nearest point on a path.
+    
+    Parameters:
+    df (pandas.DataFrame): DataFrame containing 'longitude' and 'latitude' columns
+    shp_path (str): Path to the shapefile containing the reference path
+    
+    Returns:
+    geopandas.GeoDataFrame: GeoDataFrame with corrected geometry
+    """
+    # Create a copy of the input DataFrame to avoid modifications
+    df = df.copy()
+    
+    print("Creating geometry column...")
+    # Create a geometry column from 'longitude' and 'latitude'
+    df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
+    
+    print("Converting to GeoDataFrame...")
+    # Convert the DataFrame to a GeoDataFrame
+    gdf = gpd.GeoDataFrame(df, geometry='geometry')
+    
+    print("Setting CRS...")
+    # Set the Coordinate Reference System (CRS)
+    gdf.set_crs('EPSG:4326', allow_override=True, inplace=True)
+    
+    print(f"Loading shapefile from {shp_path}...")
+    # Load the path shapefile
+    path_gdf = gpd.read_file(shp_path)
+    
+    print("Extracting path geometry...")
+    # Get the first line from the path shapefile
+    path = path_gdf.geometry.iloc[0]
+    
+    def correct_location(row, path):
+        point = row['geometry']
+        nearest_point = nearest_points(point, path)[1]
+        return nearest_point
+    
+    print("Correcting points...")
+    # Apply the correction to all points
+    gdf['geometry'] = gdf.apply(lambda row: correct_location(row, path), axis=1)
+    
+    print("Returning GeoDataFrame...")
+    return gdf  # Make sure this return statement is actually being reached
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                          PLOTTING FUNCTIONS                                   #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+def plot_save_gps(gdf, shp_path, output_path):
+    """
+    Create and save a GPS trajectory plot.
+    
+    Parameters:
+    -----------
+    gdf : GeoDataFrame
+        The GPS data points
+    shp_path : str
+        Path to the reference shapefile
+    output_path : str
+        Where to save the plot
+    """
+    # Set up plot
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Plot reference path
+    path_gdf = gpd.read_file(shp_path)
+    path_gdf.plot(ax=ax, color='black', linewidth=2, alpha=0.5, label='Reference Path')
+    
+    # Plot GPS points
+    gdf.plot(ax=ax, color='red', markersize=5, alpha=0.6, label='GPS Trajectory')
+    
+    # Add basic elements
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.6)
+    
+    # Save and close
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
