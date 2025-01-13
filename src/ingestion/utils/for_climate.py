@@ -7,10 +7,14 @@ import numpy as np
 from pythermalcomfort.models import utci, solar_gain
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point
-from shapely.ops import nearest_points
+from shapely.geometry import Point, LineString
+from shapely.validation import explain_validity
+from shapely.ops import nearest_points, unary_union
 import os
 import glob
+import math
+from datetime import datetime
+from typing import List, Tuple
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                          PROCESSING FUNCTIONS                                 #
@@ -46,7 +50,6 @@ def tidy_geodata(df):
     df = df.join(coords).drop(columns=['geometry'])
 
     return df
-
 
 def add_environmental_metrics(df):
     """
@@ -184,6 +187,11 @@ def add_environmental_metrics(df):
         ), axis=1
     )
 
+    # Clamp solar_azimuth to ensure it's within the valid range (0 to 360 degrees)
+    df['solar_azimuth'] = df['solar_azimuth'].apply(lambda x: max(0, min(x, 360)))
+    solar_gain_output = []
+    delta_mrt_values = []
+
     # Calculate delta_mrt using pythermalcomfort's solar_gain function
     delta_mrt_values = []
     for alt, az, ghi in zip(df['solar_altitude'], df['solar_azimuth'], df['ghi']):
@@ -238,6 +246,39 @@ def add_environmental_metrics(df):
 
     return df
 
+def correct_location(row, path):
+
+    """
+    Corrects the location of a point by snapping it to the
+    nearest point on a given path.
+    """
+
+    point = row['geometry']
+    
+    # Check if the point geometry is valid
+    if not point.is_valid:
+        print(f"Invalid point geometry at index {row.name}: {explain_validity(point)}")
+        return point
+    
+    # Check if the path geometry is valid
+    if not path.is_valid:
+        print(f"Invalid path geometry: {explain_validity(path)}")
+        return point
+    
+    # Check for empty geometries
+    if point.is_empty or path.is_empty:
+        print(f"Empty geometry found. Point: {point}, Path: {path}")
+        return point
+    
+    try:
+        # Calculate the nearest point
+        nearest_point = nearest_points(point, path)[1]
+    except Exception as e:
+        print(f"Error finding nearest point for index {row.name}: {e}")
+        nearest_point = point  # Return the original point if error occurs
+    
+    return nearest_point
+
 
 def correct_gps_data(df, shp_path):
     """
@@ -272,11 +313,11 @@ def correct_gps_data(df, shp_path):
     print("Extracting path geometry...")
     # Get the first line from the path shapefile
     path = path_gdf.geometry.iloc[0]
-    
-    def correct_location(row, path):
-        point = row['geometry']
-        nearest_point = nearest_points(point, path)[1]
-        return nearest_point
+
+    ### Filter invalid geometries
+    gdf = gdf[gdf['geometry'].is_valid]
+    gdf = gdf[gdf['geometry'].notnull()]
+    gdf = gdf[~gdf['geometry'].is_empty]
     
     print("Correcting points...")
     # Apply the correction to all points
@@ -285,6 +326,98 @@ def correct_gps_data(df, shp_path):
     print("Returning GeoDataFrame...")
     return gdf  # Make sure this return statement is actually being reached
 
+def haversine(lat1, lon1, lat2, lon2):
+  """
+    Calculate the great circle distance between two points
+    on the Earth (specified in decimal degrees) using the Haversine formula.
+    Source: https://medium.com/@herihermawan/comparing-the-haversine-and-vincenty-algorithms-for-calculating-great-circle-distance-5a2165857666
+  """
+
+  # Convert latitude and longitude to radians
+  lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+
+  # Calculate the difference between the two coordinates
+  dlat = lat2 - lat1
+  dlon = lon2 - lon1
+
+  # Apply the haversine formula
+  a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+  c = 2 * math.asin(math.sqrt(a))
+
+  # Calculate the radius of the Earth
+  r = 6371 # radius of Earth in kilometers
+
+  # Return the distance
+  return c * r
+
+def vincenty(lat1, lon1, lat2, lon2):
+  
+  """
+    Calculate the great circle distance between two points
+    on the Earth using the Vincenty formula.
+    Source: https://medium.com/@herihermawan/comparing-the-haversine-and-vincenty-algorithms-for-calculating-great-circle-distance-5a2165857666
+  """
+  # Convert latitude and longitude to radians
+  lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+
+  # Calculate the difference between the two coordinates
+  dlat = lat2 - lat1
+  dlon = lon2 - lon1
+
+  # Apply the Vincenty formula
+  a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+  c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+  # Calculate the ellipsoid parameters
+  f = 1/298.257223563 # flattening of the Earth's ellipsoid
+  b = (1 - f) * 6371 # semi-minor axis of the Earth's ellipsoid
+
+  # Return the distance
+  return c * b
+
+def group_gps_by_distance(
+    gps_data,
+    distance_threshold=10
+) -> List[Tuple[datetime, datetime]]:
+    """
+    Groups a GPS+time dataset into segments of ~10 meters. 
+    gps_data is assumed to be an iterable of rows with columns:
+      ['lat', 'lon', 'time']
+    Returns a list of (start_time, end_time) for each ~10 meter segment.
+    """
+    if len(gps_data) < 2:
+        return []
+
+    segments = []
+    # Initialize
+    seg_start_idx = 0
+    cumulative_dist = 0.0
+
+    for i in range(1, len(gps_data)):
+        lat1 = gps_data[i-1]['lat']
+        lon1 = gps_data[i-1]['lon']
+        lat2 = gps_data[i]['lat']
+        lon2 = gps_data[i]['lon']
+
+        dist = haversine(lat1, lon1, lat2, lon2)
+        cumulative_dist += dist
+
+        if cumulative_dist >= distance_threshold:
+            # We define a segment boundary at i
+            start_time = gps_data[seg_start_idx]['time']
+            end_time   = gps_data[i]['time']
+            segments.append((start_time, end_time))
+
+            # Reset boundary
+            seg_start_idx = i
+            cumulative_dist = 0.0
+
+    # Optionally, if you want to handle the "last partial" segment:
+    # if seg_start_idx < len(gps_data)-1:
+    #     segments.append((gps_data[seg_start_idx]['time'],
+    #                      gps_data[-1]['time']))
+
+    return segments
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                          PLOTTING FUNCTIONS                                   #
