@@ -29,3 +29,4 @@ def extract_session_name(folder_name):
         session_name = match.group(1)
         return unidecode(session_name)  # Normalize special characters
     return unidecode(folder_name)  # Fallback to the original folder name
+

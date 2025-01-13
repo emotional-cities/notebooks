@@ -419,6 +419,30 @@ def group_gps_by_distance(
 
     return segments
 
+def add_typology(data_path, typology):
+    """Add typology for each gps coordinate based on predefined classification of the urban seettings associated with the gps coordinates. The typology information is present in one excel file which contains the intervals in meters associated with each typology. This function associates the GPS coordinates from the path with the typology. It does so by computing the havesine distance for successive GPS coordinates until the distance is greater than the interval in meters associated with the typology. The input should be an excel file with longittude and latitude columns. The output is a new excel file with the typology column added.
+    
+    Args:
+        data_path (str): Data path to add the typology.
+        typology (str): Typology to add to the data path.
+    
+    Returns:
+        str: Data path with the typology added.
+    """
+
+    # Compute haversine dist
+    
+    # Load the data
+    data = pd.read_excel(data_path)
+    
+    # Add the typology
+    data['typology'] = typology
+    
+    # Save the data
+    data.to_excel(data_path, index=False)
+    
+    return data_path
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                          PLOTTING FUNCTIONS                                   #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

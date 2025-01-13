@@ -2,6 +2,10 @@ import os
 import sys
 import glob
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                  LISBON                                       #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 # Get current directory and user name
 cdir = os.getcwd()
 user = os.environ.get('USER') or os.environ.get('UserName')
