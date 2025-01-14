@@ -1,3 +1,15 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                              IMPORT LIBRARIES                                 #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+import os
+import pandas as pd
+import numpy as np
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                          PROCESSING FUNCTIONS                                 #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 def infer_participant_code(city, subject_id, session, stimulus):
     """
     Infers the participant code based on the city, subject ID, session, and stimulus.
@@ -33,7 +45,23 @@ def infer_participant_code(city, subject_id, session, stimulus):
             ('Parque', 6),
             ('Gulbenkian', 3),
             ('Lapa', 2),
-            ('Graca', 5)
+            ('Graca', 5),
+            ('Gulb1', 7),
+            ('Casamoeda', 8),
+            ('Agudo', 9),
+            ('Msoares', 10),
+            ('Marvila', 11),
+            ('Oriente', 12),
+            ('Madre', 13),
+            ('Pupilos', 14),
+            ('Luz', 15),
+            ('Alfarrobeira', 16),
+            ('Restauradores', 17),
+            ('Restelo', 18),
+            ('Estrela', 19),
+            ('EstrelaA', 20),
+            ('EstrelaB', 21),
+            ('Prazeres', 22)            
         ]
 
         # Define checkpoints corresponding to session numbers
@@ -63,7 +91,8 @@ def infer_participant_code(city, subject_id, session, stimulus):
 
         # Get the stimulus index if a stimulus is provided
         chk_num = None
-        if stimulus:
+        # If stimulus is not "all"
+        if stimulus != 'all':
             # Get checkpoints for the session
             checkpoints_for_session = checkpoints[ses_num - 1]
             # Find the index of the stimulus
@@ -73,6 +102,8 @@ def infer_participant_code(city, subject_id, session, stimulus):
                     break
             if chk_num is None:
                 raise ValueError('Invalid stimulus for the given session.')
+        else:
+            chk_num = "f"
 
         # Construct the participant ID
         if not stimulus:
@@ -177,6 +208,26 @@ def parse_participant_code(participant_code):
         return participant_info
     else:
         raise ValueError('Participant code format not recognized or city not supported.')
-
+    
+def fetch_beh_ratings(sourcedata, id):
+    """Fetch behavioral data for a participant.
+    Parameters
+    ----------
+    sourcedata : str
+        Path to the directory containing the behavioral data.
+    id : str 
+        Output from infer_participant_code
+    ----------
+    Example:
+    --------
+        id = 'OE104003_1'
+        sam = fetch_beh_ratings(sourcedata, id)
+    """
+    # Load behavioral data
+    beh = pd.read_excel(os.path.join(sourcedata, 'sam.xlsx'))
+    # Select behavioral data for the participant
+    sam = beh[beh.iloc[:,1] == id].iloc[:,2:].values.astype(int)
+    
+    return sam
 
 

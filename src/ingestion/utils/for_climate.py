@@ -20,34 +20,130 @@ from typing import List, Tuple
 #                          PROCESSING FUNCTIONS                                 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+def geodata_to_csv(dataset, participant_name, session_name, output):
+    """Process geodata and save it to a CSV file.
+
+    """
+    
+    # Import functions from utils
+    from utils import fetch_path_num 
+    import utils.for_setpath as path
+
+    try:
+        # Create geodata
+        geodata = dataset.to_geoframe()
+
+        # Process geodata
+        geodata['time'] = geodata.index.to_pydatetime()       # Convert index to datetime
+        geodata         = tidy_geodata(geodata)               # Tidy geodata variables
+        geodata         = add_environmental_metrics(geodata)  # Add environmental metrics
+
+        # Prepare oututs for the log directory
+        log_folder   = os.path.join(output, f"sub-{participant_name}", f"ses-{session_name}")
+        os.makedirs(log_folder, exist_ok=True)
+        geodata_file = os.path.join(log_folder, f"sub-{participant_name}_ses-{session_name}_geodata.xlsx")
+        gps_file     = os.path.join(log_folder, f"sub-{participant_name}_ses-{session_name}_gps.png")
+
+        # Get path information
+        path_num = fetch_path_num(session_name)
+
+        # Correct GPS data and plot it
+        try: 
+            shpdata    = os.path.join(path.sourcedata, 'supp','interexperimentalpaths_shp')
+            # Get shapefile name
+            if path_num == '01':
+                shp_filename = "01_belem.shp"
+            elif path_num == '02':
+                shp_filename = "02_lapa.shp"
+            elif path_num == '03':
+                shp_filename = "03_gulbenkian.shp"
+            elif path_num == '04':
+                shp_filename = "04_Baixa.shp"
+            elif path_num == '05':
+                shp_filename = "05_Graca.shp"
+            elif path_num == '06':
+                shp_filename = "06_Pnacoes.shp"
+            elif path_num == '07':
+                shp_filename = "07_ANovas_Sa_Bandeira.shp"
+            elif path_num == '08':
+                shp_filename = "08_ANovas_CMoeda.shp"
+            elif path_num == '09':
+                shp_filename = "09_PFranca_Escolas.shp"
+            elif path_num == '10':
+                shp_filename = "10_PFranca_Morais_Soares.shp"
+            elif path_num == '11':
+                shp_filename = "11_Marvila_Beato.shp"
+            elif path_num == '12':
+                shp_filename = "12_PNacoes_Gare.shp"
+            elif path_num == '13':
+                shp_filename = "13_Madredeus.shp"
+            elif path_num == '14':
+                shp_filename = "14_Benfica_Pupilos.shp"
+            elif path_num == '15':
+                shp_filename = "15_Benfica_Moinhos.shp"
+            elif path_num == '16':
+                shp_filename = "16_Benfica_Grandella.shp"
+            elif path_num == '17':
+                shp_filename = "17_Restauradores.shp"
+            elif path_num == '18':
+                shp_filename = "18_Belem_Estadio.shp"
+            elif path_num == '19':
+                shp_filename = "19_Estrela_Jardim.shp"
+            elif path_num == '20':
+                shp_filename = "20_Estrela_Assembleia.shp"
+            elif path_num == '21':
+                shp_filename = "21_Estrela_Rato.shp"
+            elif path_num == '22':
+                shp_filename = "22_Estrela_Prazeres.shp"
+            # Correct GPS data
+            shp_file        = os.path.join(shpdata, shp_filename)
+            geodata         = correct_gps_data(geodata, shp_file)
+            # Plot and save geodata's GPS
+            plot_save_gps(geodata, shp_file, gps_file)
+        except Exception as e:
+            print(f"An unexpected error occurred for participant '{participant_name}', session '{session_name}': {e}")
+            print("Could not correct GPS data...")
+
+        # Ensure geodata is a DataFrame and save as Excel
+        if not isinstance(geodata, pd.DataFrame):
+            geodata = pd.DataFrame(geodata)
+        geodata.to_excel(geodata_file, index=True)
+
+    except Exception as e:
+        print(f"An unexpected error occurred for participant '{participant_name}', session '{session_name}': {e}")
+        print("Could not export geodata...")
+
 def tidy_geodata(df):
 
-    """Tidy variables in geodata."""
+    """Tidy variables in geodata.
+    """
     
     # Define custom parameters
-    humidity = df['tk_humidity_humidity_value'] / 100  # in fraction
-    wind_speed = np.sqrt(df['atmos_northwind_value']**2 + df['atmos_eastwind_value']**2)  # m/s (~2.5 m of elevation)
-    temp_atmos = df['atmos_airtemperature_value']  # in ºC
-    temp_tk = df['tk_airquality_temperature_value'] / 100  # in ºC
-    temp_tk_ptc = df['tk_ptc_airtemp_value'] / 100  # in ºC
-    temp_radiant = df['tk_thermocouple_temperature_value'] / 100  # in ºC
+    humidity              = df['tk_humidity_humidity_value'] / 100         # in fraction
+    wind_speed            = np.sqrt(df['atmos_northwind_value']**2 + df['atmos_eastwind_value']**2)  # m/s (~2.5 m of elevation)
+    temp_atmos            = df['atmos_airtemperature_value']               # in ºC
+    temp_tk               = df['tk_airquality_temperature_value'] / 100    # in ºC
+    temp_tk_ptc           = df['tk_ptc_airtemp_value'] / 100               # in ºC
+    temp_radiant          = df['tk_thermocouple_temperature_value'] / 100  # in ºC
+    noise_level           = df['tk_soundpressurelevel_spl_value'] /10      # in dBA
 
     # Assign custom parameters to the df attribute
-    df['humidity'] = humidity
-    df['wind_speed'] = wind_speed
-    df['temp_atmos'] = temp_atmos
-    df['temp_tk'] = temp_tk
-    df['temp_tk_ptc'] = temp_tk_ptc
-    df['temp_radiant'] = temp_radiant
+    df['humidity']        = humidity
+    df['wind_speed']      = wind_speed
+    df['temp_atmos']      = temp_atmos
+    df['temp_tk']         = temp_tk
+    df['temp_tk_ptc']     = temp_tk_ptc
+    df['temp_radiant']    = temp_radiant
+    df['noise_level']     = noise_level
 
     # Compute the UTCI
-    df['utci'] = utci(tdb=temp_atmos, tr=temp_radiant, v=wind_speed, rh=humidity)
+    df['utci']            = utci(tdb=temp_atmos, tr=temp_radiant, v=wind_speed, rh=humidity)
 
     # Get GPS coordinates and integrate them into df
-    coords = df.geometry.get_coordinates(include_z=True)
+    coords                = df.geometry.get_coordinates(include_z=True)
     # Optionally rename the coordinate columns
-    coords.rename(columns={'y': 'latitude', 'x': 'longitude', 'z': 'elevation'}, inplace=True)
-    df = df.join(coords).drop(columns=['geometry'])
+    coords.rename(columns ={'y': 'latitude', 'x': 'longitude', 'z': 'elevation'}, inplace=True)
+    df                    = df.join(coords).drop(columns=['geometry'])
 
     return df
 
@@ -291,6 +387,7 @@ def correct_gps_data(df, shp_path):
     Returns:
     geopandas.GeoDataFrame: GeoDataFrame with corrected geometry
     """
+
     # Create a copy of the input DataFrame to avoid modifications
     df = df.copy()
     

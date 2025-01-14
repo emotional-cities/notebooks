@@ -48,3 +48,7 @@ derivatives = os.path.join(root, 'derivatives')
 for path in glob.glob(os.path.join(scripts, '**'), recursive=True):
 	if os.path.isdir(path):
 		sys.path.append(path)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                              COPENHAGEN                                       #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
