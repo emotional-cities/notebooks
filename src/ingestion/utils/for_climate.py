@@ -46,6 +46,7 @@ def geodata_to_csv(dataset, participant_name, session_name, output):
 
         # Get path information
         path_num = fetch_path_num(session_name)
+        path_num = str(path_num).zfill(2) # make it a two-digit string
 
         # Correct GPS data and plot it
         try: 

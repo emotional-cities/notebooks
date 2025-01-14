@@ -214,6 +214,8 @@ def plot_mapped_data(shpdata, session):
     
     # Get path information
     path_num = fetch_path_num(session)
+    path_num = str(path_num).zfill(2) # make it a two-digit string
+
     # Get shapefile name
     if path_num == '01':
         shp_filename = "01_belem.shp"
