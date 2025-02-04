@@ -21,22 +21,10 @@ def empatica_and_ecg_to_csv(datapicker, outdir):
     
     # Get LSL markers
     lsl_markers = datapicker.streams.EEG.server_lsl_marker[datapicker.streams.EEG.server_lsl_marker.MarkerIdx>35000]
-
-    try:
-        # Get heartrate from ECG (ERROR -> TypeError: 'DotMap' object is not callable)
-        ecg_hr = heartrate_from_ecg(ecg = datapicker.streams.BioData.ECG,
-                                    sample_rate = 50, bpmmax = 200)
-    except:
-        print('ERROR: heartrate_from_ecg')
-    
     
     # Save to csv
     lsl_markers.to_csv(outdir+r'\lsl_markers.csv')
-    try:
-        ecg_hr.to_csv(outdir+r'\ecg_hr.csv')
-        datapicker.streams.BioData.ECG.data.Value0.to_frame().to_csv(outdir+r'\ecg.csv')
-    except:
-        print('ERROR: error saving ecg_hr and ecg')
+    datapicker.streams.BioData.ECG.data.HeartRate.to_csv(outdir+r'\ecg_hr.csv')
     datapicker.streams.Empatica.data.E4_Gsr.to_csv(outdir+r'\e4_gsr.csv')
     datapicker.streams.Empatica.data.E4_Temperature.to_csv(outdir+r'\e4_temp.csv')
     datapicker.streams.Empatica.data.E4_Ibi.to_csv(outdir+r'\e4_ibi.csv')
@@ -86,7 +74,9 @@ def export_resampled_empatica_data(input_dir, output_dir):
     fs_bvp = 64
     fs_eda = 4
 
-    # Load data from CSV files (excluding ecg_hr.csv and ecg.csv)
+    # Load ecg_hr
+
+    # Load data from CSV files
     print("Loading data...")
     bvp_subj = pd.read_csv(os.path.join(input_dir, 'e4_bvp.csv'))
     ibi_subj = pd.read_csv(os.path.join(input_dir, 'e4_ibi.csv'))

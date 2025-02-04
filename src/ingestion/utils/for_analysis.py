@@ -188,6 +188,11 @@ def do_analysis_design(results_dir, design, **kwargs):
             # Convert columns to numeric where possible
             numeric_cols = big_df.select_dtypes(include=[np.number]).columns.tolist()
 
+            # Transform geometry to longitude and latitude columns
+            if 'geometry' in big_df.columns:
+                big_df['longitude'] = big_df['geometry'].apply(lambda x: x.x)
+                big_df['latitude'] = big_df['geometry'].apply(lambda x: x.y)
+
             # Group by GPS coordinate
             grouped = (
                 big_df.groupby(['longitude','latitude'], as_index=False)[numeric_cols]
@@ -207,6 +212,10 @@ def do_analysis_design(results_dir, design, **kwargs):
         print(f"Unknown design type: {design}")
         return pd.DataFrame()
     
+
+
+### PLOT ###
+
 def plot_mapped_data(shpdata, session):
     
     # Import necessary functions
@@ -263,5 +272,4 @@ def plot_mapped_data(shpdata, session):
         shp_filename = "22_Estrela_Prazeres.shp"
     # Correct GPS data
     shp_file        = os.path.join(shpdata, shp_filename)
-
 

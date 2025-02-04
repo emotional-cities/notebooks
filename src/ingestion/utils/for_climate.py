@@ -39,10 +39,9 @@ def geodata_to_csv(dataset, participant_name, session_name, output):
         geodata         = add_environmental_metrics(geodata)  # Add environmental metrics
 
         # Prepare oututs for the log directory
-        log_folder   = os.path.join(output, f"sub-{participant_name}", f"ses-{session_name}")
-        os.makedirs(log_folder, exist_ok=True)
-        geodata_file = os.path.join(log_folder, f"sub-{participant_name}_ses-{session_name}_geodata.xlsx")
-        gps_file     = os.path.join(log_folder, f"sub-{participant_name}_ses-{session_name}_gps.png")
+        os.makedirs(output, exist_ok=True)
+        geodata_file = os.path.join(output, f"sub-{participant_name}_ses-{session_name}_geodata.xlsx")
+        gps_file     = os.path.join(output, f"sub-{participant_name}_ses-{session_name}_gps.png")
 
         # Get path information
         path_num = fetch_path_num(session_name)
