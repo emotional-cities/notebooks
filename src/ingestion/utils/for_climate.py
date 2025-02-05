@@ -15,6 +15,10 @@ import glob
 import math
 from datetime import datetime
 from typing import List, Tuple
+from sklearn.neighbors import BallTree
+import os
+from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                          PROCESSING FUNCTIONS                                 #
@@ -22,12 +26,17 @@ from typing import List, Tuple
 
 def geodata_to_csv(dataset, participant_name, session_name, output):
     """Process geodata and save it to a CSV file.
-
+        This is the most important function for processing geodata of each dataset.
+        It takes the dataset, participant name, session name, and output path as input.
+        It processes the geodata, corrects the GPS data, and saves the geodata to an Excel file.
+        It also plots and saves the GPS data to a PNG file.
     """
     
     # Import functions from utils
     from utils import fetch_path_num 
     import utils.for_setpath as path
+
+    print(f"Processing geodata for participant '{participant_name}', session '{session_name}'...")
 
     try:
         # Create geodata
@@ -95,11 +104,13 @@ def geodata_to_csv(dataset, participant_name, session_name, output):
                 shp_filename = "21_Estrela_Rato.shp"
             elif path_num == '22':
                 shp_filename = "22_Estrela_Prazeres.shp"
+            elif path_num == '23':
+                shp_filename = "23_MAAT_path.shp"
             # Correct GPS data
             shp_file        = os.path.join(shpdata, shp_filename)
-            geodata         = correct_gps_data(geodata, shp_file)
-            # Plot and save geodata's GPS
-            plot_save_gps(geodata, shp_file, gps_file)
+            geodata         = correct_gps_data(geodata, shp_file, output)
+            print(f"Corrected GPS data for participant '{participant_name}', session '{session_name}'...")
+            print('Check plot for the corrected GPS data...')
         except Exception as e:
             print(f"An unexpected error occurred for participant '{participant_name}', session '{session_name}': {e}")
             print("Could not correct GPS data...")
@@ -342,135 +353,188 @@ def add_environmental_metrics(df):
 
     return df
 
-def correct_location(row, path):
-
+def correct_gps_data(df, shp_path, output_dir):
     """
-    Corrects the location of a point by snapping it to the
-    nearest point on a given path.
-    """
-
-    point = row['geometry']
-    
-    # Check if the point geometry is valid
-    if not point.is_valid:
-        print(f"Invalid point geometry at index {row.name}: {explain_validity(point)}")
-        return point
-    
-    # Check if the path geometry is valid
-    if not path.is_valid:
-        print(f"Invalid path geometry: {explain_validity(path)}")
-        return point
-    
-    # Check for empty geometries
-    if point.is_empty or path.is_empty:
-        print(f"Empty geometry found. Point: {point}, Path: {path}")
-        return point
-    
-    try:
-        # Calculate the nearest point
-        nearest_point = nearest_points(point, path)[1]
-    except Exception as e:
-        print(f"Error finding nearest point for index {row.name}: {e}")
-        nearest_point = point  # Return the original point if error occurs
-    
-    return nearest_point
-
-
-def correct_gps_data(df, shp_path):
-    """
-    Correct GPS coordinates by snapping points to the nearest point on a path.
+    Robust GPS correction with continuity checks, parameter optimization, and advanced visualization.
+    Saves all plots and creates a video showing the mapping process.
     
     Parameters:
-    df (pandas.DataFrame): DataFrame containing 'longitude' and 'latitude' columns
-    shp_path (str): Path to the shapefile containing the reference path
-    
-    Returns:
-    geopandas.GeoDataFrame: GeoDataFrame with corrected geometry
+    -----------
+    df : DataFrame
+        Input DataFrame with latitude and longitude columns
+    shp_path : str
+        Path to the reference shapefile
+    output_dir : str
+        Directory where outputs will be saved
     """
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # 1. Load and validate input
+    gdf = gpd.GeoDataFrame(
+        df,
+        geometry=gpd.points_from_xy(df.longitude, df.latitude),
+        crs="EPSG:4326"
+    ).to_crs("EPSG:3763")
 
-    # Create a copy of the input DataFrame to avoid modifications
-    df = df.copy()
-    
-    print("Creating geometry column...")
-    # Create a geometry column from 'longitude' and 'latitude'
-    df['geometry'] = df.apply(lambda row: Point(row['longitude'], row['latitude']), axis=1)
-    
-    print("Converting to GeoDataFrame...")
-    # Convert the DataFrame to a GeoDataFrame
-    gdf = gpd.GeoDataFrame(df, geometry='geometry')
-    
-    print("Setting CRS...")
-    # Set the Coordinate Reference System (CRS)
-    gdf.set_crs('EPSG:4326', allow_override=True, inplace=True)
-    
-    print(f"Loading shapefile from {shp_path}...")
-    # Load the path shapefile
-    path_gdf = gpd.read_file(shp_path)
-    
-    print("Extracting path geometry...")
-    # Get the first line from the path shapefile
+    # 2. Prepare reference path
+    path_gdf = gpd.read_file(shp_path).to_crs("EPSG:3763")
     path = path_gdf.geometry.iloc[0]
-
-    ### Filter invalid geometries
-    gdf = gdf[gdf['geometry'].is_valid]
-    gdf = gdf[gdf['geometry'].notnull()]
-    gdf = gdf[~gdf['geometry'].is_empty]
     
-    print("Correcting points...")
-    # Apply the correction to all points
-    gdf['geometry'] = gdf.apply(lambda row: correct_location(row, path), axis=1)
+    # Create high-res reference points
+    line_length = path.length
+    ref_distances = np.arange(0, line_length, 0.1)
+    ref_points = np.array([[p.x, p.y] for p in 
+                          [path.interpolate(d) for d in ref_distances]])
+    tree = BallTree(ref_points)
+
+    def process_points(max_jump, step):
+        # [Previous process_points code remains the same]
+        jumps_count = 0
+        cumulative_dists = []
+        mapped_points = []
+        prev_dist = None
+        prev_idx = None
+        mapping_lines = []
+        
+        for idx in range(len(gdf)):
+            point = gdf.geometry.iloc[idx]
+            _, idx_ref = tree.query([[point.x, point.y]], k=1)
+            current_idx = idx_ref[0][0]
+            current_dist = ref_distances[current_idx]
+
+            if prev_dist is None:
+                if current_dist > max_jump*10:
+                    jumps_count += 1
+                    current_dist = 0
+                    current_idx = 0
+            else:
+                if abs((current_dist - prev_dist)) > max_jump:
+                    jumps_count += 1
+                    try:
+                        current_idx = prev_idx + step
+                        current_dist = ref_distances[current_idx]
+                    except:
+                        current_idx = len(ref_points) - 1
+                        current_dist = ref_distances[-1]
+            
+            mapped_point = ref_points[current_idx]
+            mapped_points.append(mapped_point)
+            mapping_lines.append([(point.x, point.y), (mapped_point[0], mapped_point[1])])
+            
+            cumulative_dists.append(current_dist)
+            prev_dist = current_dist
+            prev_idx = current_idx
+        
+        return cumulative_dists, jumps_count, np.array(mapped_points), mapping_lines
+
+    # Optimize parameters
+    print("Optimizing parameters...")
+    steps = range(1, 11)
+    max_jumps = np.linspace(1, 100, 100)
     
-    print("Returning GeoDataFrame...")
-    return gdf  # Make sure this return statement is actually being reached
-
-def haversine(lat1, lon1, lat2, lon2):
-  """
-    Calculate the great circle distance between two points
-    on the Earth (specified in decimal degrees) using the Haversine formula.
-    Source: https://medium.com/@herihermawan/comparing-the-haversine-and-vincenty-algorithms-for-calculating-great-circle-distance-5a2165857666
-  """
-
-  # Convert latitude and longitude to radians
-  lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-
-  # Calculate the difference between the two coordinates
-  dlat = lat2 - lat1
-  dlon = lon2 - lon1
-
-  # Apply the haversine formula
-  a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-  c = 2 * math.asin(math.sqrt(a))
-
-  # Calculate the radius of the Earth
-  r = 6371 # radius of Earth in kilometers
-
-  # Return the distance
-  return c * r
-
-def vincenty(lat1, lon1, lat2, lon2):
-  
-  """
-    Calculate the great circle distance between two points
-    on the Earth using the Vincenty formula.
-    Source: https://medium.com/@herihermawan/comparing-the-haversine-and-vincenty-algorithms-for-calculating-great-circle-distance-5a2165857666
-  """
-  # Convert latitude and longitude to radians
-  lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-
-  # Calculate the difference between the two coordinates
-  dlat = lat2 - lat1
-  dlon = lon2 - lon1
-
-  # Apply the Vincenty formula
-  a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-  c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-
-  # Calculate the ellipsoid parameters
-  f = 1/298.257223563 # flattening of the Earth's ellipsoid
-  b = (1 - f) * 6371 # semi-minor axis of the Earth's ellipsoid
-
-  # Return the distance
-  return c * b
+    min_jumps = float('inf')
+    optimal_dists = None
+    optimal_params = None
+    optimal_mapped_points = None
+    optimal_mapping_lines = None
+    
+    for step in steps:
+        for max_jump in max_jumps:
+            dists, jumps, mapped_points, mapping_lines = process_points(max_jump, step)
+            if jumps < min_jumps:
+                min_jumps = jumps
+                optimal_dists = dists
+                optimal_params = (step, max_jump)
+                optimal_mapped_points = mapped_points
+                optimal_mapping_lines = mapping_lines
+    
+    print(f"\nOptimal parameters found:")
+    print(f"step: {optimal_params[0]}")
+    print(f"max_jump: {optimal_params[1]:.2f}")
+    print(f"Number of jumps: {min_jumps}")
+    
+    # Add corrected coordinates and distances
+    gdf['cum_dist'] = optimal_dists
+    gdf['corrected_x'] = optimal_mapped_points[:, 0]
+    gdf['corrected_y'] = optimal_mapped_points[:, 1]
+    gdf['geometry_corrected'] = gpd.points_from_xy(
+        gdf.corrected_x, 
+        gdf.corrected_y, 
+        crs=gdf.crs
+    )
+    
+    # Create static plots
+    def save_plot(fig, filename):
+        fig.savefig(os.path.join(output_dir, filename), dpi=300, bbox_inches='tight')
+        plt.close(fig)
+    
+    # 1. Raw vs Corrected Points
+    fig, ax = plt.subplots(figsize=(12, 8))
+    path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
+    gdf.plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
+    ax.scatter(optimal_mapped_points[:, 0], optimal_mapped_points[:, 1], 
+               color='blue', alpha=0.5, label='Corrected Points')
+    ax.set_title('Raw vs Corrected GPS Points')
+    ax.legend()
+    save_plot(fig, 'raw_vs_corrected.png')
+    
+    # 2. Only Corrected Points
+    fig, ax = plt.subplots(figsize=(12, 8))
+    path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
+    ax.scatter(optimal_mapped_points[:, 0], optimal_mapped_points[:, 1], 
+               color='blue', alpha=0.5, label='Corrected Points')
+    ax.set_title('Corrected GPS Points')
+    ax.legend()
+    save_plot(fig, 'corrected_only.png')
+    
+    # 3. Cumulative Distance Plot
+    fig, ax = plt.subplots(figsize=(12, 4))
+    ax.plot(optimal_dists, '-o', alpha=0.5)
+    ax.set_title('Cumulative Distance Along Path')
+    ax.set_xlabel('Point Index')
+    ax.set_ylabel('Distance (m)')
+    ax.grid(True)
+    save_plot(fig, 'cumulative_distance.png')
+    
+    # Create animation
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    def init():
+        path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
+        gdf.plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
+        ax.legend()
+        return []
+    
+    def update(frame):
+        ax.clear()
+        path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
+        gdf.iloc[:frame+1].plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
+        
+        # Plot corrected points up to current frame
+        ax.scatter(optimal_mapped_points[:frame+1, 0], 
+                  optimal_mapped_points[:frame+1, 1],
+                  color='blue', alpha=0.5, label='Corrected Points')
+        
+        # Plot mapping line for current point
+        line = optimal_mapping_lines[frame]
+        ax.plot([line[0][0], line[1][0]], [line[0][1], line[1][1]], 
+                'k-', alpha=0.5, label='Mapping' if frame == 0 else "")
+        
+        ax.set_title(f'Point Mapping Process (Point {frame+1}/{len(gdf)})')
+        ax.legend()
+        return []
+    
+    anim = FuncAnimation(fig, update, init_func=init, frames=len(gdf),
+                        interval=100, blit=True)
+    
+    # Save animation
+    writer = animation.FFMpegWriter(fps=10, bitrate=1800)
+    anim.save(os.path.join(output_dir, 'mapping_process.mp4'), writer=writer)
+    plt.close()
+    
+    return gdf
 
 def group_gps_by_distance(
     gps_data,
@@ -539,6 +603,59 @@ def add_typology(data_path, typology):
     data.to_excel(data_path, index=False)
     
     return data_path
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                   FORMULAS                                    # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+def haversine(lat1, lon1, lat2, lon2):
+  """
+    Calculate the great circle distance between two points
+    on the Earth (specified in decimal degrees) using the Haversine formula.
+    Source: https://medium.com/@herihermawan/comparing-the-haversine-and-vincenty-algorithms-for-calculating-great-circle-distance-5a2165857666
+  """
+
+  # Convert latitude and longitude to radians
+  lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+
+  # Calculate the difference between the two coordinates
+  dlat = lat2 - lat1
+  dlon = lon2 - lon1
+
+  # Apply the haversine formula
+  a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+  c = 2 * math.asin(math.sqrt(a))
+
+  # Calculate the radius of the Earth
+  r = 6371 # radius of Earth in kilometers
+
+  # Return the distance
+  return c * r
+
+def vincenty(lat1, lon1, lat2, lon2):
+  
+  """
+    Calculate the great circle distance between two points
+    on the Earth using the Vincenty formula.
+    Source: https://medium.com/@herihermawan/comparing-the-haversine-and-vincenty-algorithms-for-calculating-great-circle-distance-5a2165857666
+  """
+  # Convert latitude and longitude to radians
+  lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+
+  # Calculate the difference between the two coordinates
+  dlat = lat2 - lat1
+  dlon = lon2 - lon1
+
+  # Apply the Vincenty formula
+  a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+  c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+  # Calculate the ellipsoid parameters
+  f = 1/298.257223563 # flattening of the Earth's ellipsoid
+  b = (1 - f) * 6371 # semi-minor axis of the Earth's ellipsoid
+
+  # Return the distance
+  return c * b
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                          PLOTTING FUNCTIONS                                   #
