@@ -14,7 +14,7 @@ dependencies:
   - biosppy
   - pip
   - pip:
-    - ipyfilechooser
+    - \ipyfilechooser
     - opencv-python
     - git+https://github.com/emotional-cities/pluma-analysis.git@46cffe14b514d64a83483dbd07c93872ddc9577e
     - pythermalcomfort

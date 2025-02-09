@@ -108,9 +108,14 @@ def geodata_to_csv(dataset, participant_name, session_name, output):
                 shp_filename = "23_MAAT_path.shp"
             # Correct GPS data
             shp_file        = os.path.join(shpdata, shp_filename)
-            geodata         = correct_gps_data(geodata, shp_file, output)
+            geodata         = correct_gps_data(geodata, shp_file, output, plot=False)
             print(f"Corrected GPS data for participant '{participant_name}', session '{session_name}'...")
             print('Check plot for the corrected GPS data...')
+            # Add typology
+            if path_num in ['01', '02', '03', '04', '05', '06', '23']:
+                print('Adding typology...')
+                geodata = add_typology(geodata, path.sourcedata, int(path_num))
+            
         except Exception as e:
             print(f"An unexpected error occurred for participant '{participant_name}', session '{session_name}': {e}")
             print("Could not correct GPS data...")
@@ -131,7 +136,7 @@ def tidy_geodata(df):
     
     # Define custom parameters
     humidity              = df['tk_humidity_humidity_value'] / 100         # in fraction
-    wind_speed            = np.sqrt(df['atmos_northwind_value']**2 + df['atmos_eastwind_value']**2)  # m/s (~2.5 m of elevation)
+    wind_speed            = np.sqrt(df['atmos_northwind_value']**2 + df['atmos_eastwind_value']**2)  # m/s (at ~2.5 m of elevation)
     temp_atmos            = df['atmos_airtemperature_value']               # in ºC
     temp_tk               = df['tk_airquality_temperature_value'] / 100    # in ºC
     temp_tk_ptc           = df['tk_ptc_airtemp_value'] / 100               # in ºC
@@ -150,9 +155,8 @@ def tidy_geodata(df):
     # Compute the UTCI
     df['utci']            = utci(tdb=temp_atmos, tr=temp_radiant, v=wind_speed, rh=humidity)
 
-    # Get GPS coordinates and integrate them into df
+    # Get raw GPS coordinates and integrate them into df
     coords                = df.geometry.get_coordinates(include_z=True)
-    # Optionally rename the coordinate columns
     coords.rename(columns ={'y': 'latitude', 'x': 'longitude', 'z': 'elevation'}, inplace=True)
     df                    = df.join(coords).drop(columns=['geometry'])
 
@@ -353,7 +357,7 @@ def add_environmental_metrics(df):
 
     return df
 
-def correct_gps_data(df, shp_path, output_dir):
+def correct_gps_data(df, shp_path, output_dir, plot=True):
     """
     Robust GPS correction with continuity checks, parameter optimization, and advanced visualization.
     Saves all plots and creates a video showing the mapping process.
@@ -390,7 +394,7 @@ def correct_gps_data(df, shp_path, output_dir):
     tree = BallTree(ref_points)
 
     def process_points(max_jump, step):
-        # [Previous process_points code remains the same]
+        
         jumps_count = 0
         cumulative_dists = []
         mapped_points = []
@@ -464,75 +468,84 @@ def correct_gps_data(df, shp_path, output_dir):
         gdf.corrected_y, 
         crs=gdf.crs
     )
+
+    # Transform the corrected geometry back to WGS84
+    gdf_wgs84 = gdf.set_geometry('geometry_corrected').to_crs("EPSG:4326")
     
-    # Create static plots
-    def save_plot(fig, filename):
-        fig.savefig(os.path.join(output_dir, filename), dpi=300, bbox_inches='tight')
-        plt.close(fig)
+    # Extract the corrected lat/lon coordinates
+    gdf['longitude_corrected'] = gdf_wgs84.geometry.x
+    gdf['latitude_corrected']  = gdf_wgs84.geometry.y
+
+    if plot:
     
-    # 1. Raw vs Corrected Points
-    fig, ax = plt.subplots(figsize=(12, 8))
-    path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
-    gdf.plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
-    ax.scatter(optimal_mapped_points[:, 0], optimal_mapped_points[:, 1], 
-               color='blue', alpha=0.5, label='Corrected Points')
-    ax.set_title('Raw vs Corrected GPS Points')
-    ax.legend()
-    save_plot(fig, 'raw_vs_corrected.png')
-    
-    # 2. Only Corrected Points
-    fig, ax = plt.subplots(figsize=(12, 8))
-    path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
-    ax.scatter(optimal_mapped_points[:, 0], optimal_mapped_points[:, 1], 
-               color='blue', alpha=0.5, label='Corrected Points')
-    ax.set_title('Corrected GPS Points')
-    ax.legend()
-    save_plot(fig, 'corrected_only.png')
-    
-    # 3. Cumulative Distance Plot
-    fig, ax = plt.subplots(figsize=(12, 4))
-    ax.plot(optimal_dists, '-o', alpha=0.5)
-    ax.set_title('Cumulative Distance Along Path')
-    ax.set_xlabel('Point Index')
-    ax.set_ylabel('Distance (m)')
-    ax.grid(True)
-    save_plot(fig, 'cumulative_distance.png')
-    
-    # Create animation
-    fig, ax = plt.subplots(figsize=(12, 8))
-    
-    def init():
+        # Create static plots
+        def save_plot(fig, filename):
+            fig.savefig(os.path.join(output_dir, filename), dpi=300, bbox_inches='tight')
+            plt.close(fig)
+        
+        # 1. Raw vs Corrected Points
+        fig, ax = plt.subplots(figsize=(12, 8))
         path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
         gdf.plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
+        ax.scatter(optimal_mapped_points[:, 0], optimal_mapped_points[:, 1], 
+                color='blue', alpha=0.5, label='Corrected Points')
+        ax.set_title('Raw vs Corrected GPS Points')
         ax.legend()
-        return []
-    
-    def update(frame):
-        ax.clear()
+        save_plot(fig, 'raw_vs_corrected.png')
+        
+        # 2. Only Corrected Points
+        fig, ax = plt.subplots(figsize=(12, 8))
         path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
-        gdf.iloc[:frame+1].plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
-        
-        # Plot corrected points up to current frame
-        ax.scatter(optimal_mapped_points[:frame+1, 0], 
-                  optimal_mapped_points[:frame+1, 1],
-                  color='blue', alpha=0.5, label='Corrected Points')
-        
-        # Plot mapping line for current point
-        line = optimal_mapping_lines[frame]
-        ax.plot([line[0][0], line[1][0]], [line[0][1], line[1][1]], 
-                'k-', alpha=0.5, label='Mapping' if frame == 0 else "")
-        
-        ax.set_title(f'Point Mapping Process (Point {frame+1}/{len(gdf)})')
+        ax.scatter(optimal_mapped_points[:, 0], optimal_mapped_points[:, 1], 
+                color='blue', alpha=0.5, label='Corrected Points')
+        ax.set_title('Corrected GPS Points')
         ax.legend()
-        return []
-    
-    anim = FuncAnimation(fig, update, init_func=init, frames=len(gdf),
-                        interval=100, blit=True)
-    
-    # Save animation
-    writer = animation.FFMpegWriter(fps=10, bitrate=1800)
-    anim.save(os.path.join(output_dir, 'mapping_process.mp4'), writer=writer)
-    plt.close()
+        save_plot(fig, 'corrected_only.png')
+        
+        # 3. Cumulative Distance Plot
+        fig, ax = plt.subplots(figsize=(12, 4))
+        ax.plot(optimal_dists, '-o', alpha=0.5)
+        ax.set_title('Cumulative Distance Along Path')
+        ax.set_xlabel('Point Index')
+        ax.set_ylabel('Distance (m)')
+        ax.grid(True)
+        save_plot(fig, 'cumulative_distance.png')
+        
+        # Create animation
+        fig, ax = plt.subplots(figsize=(12, 8))
+        
+        def init():
+            path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
+            gdf.plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
+            ax.legend()
+            return []
+        
+        def update(frame):
+            ax.clear()
+            path_gdf.plot(ax=ax, color='grey', alpha=0.5, label='Reference Path')
+            gdf.iloc[:frame+1].plot(ax=ax, color='red', alpha=0.5, label='Raw GPS')
+            
+            # Plot corrected points up to current frame
+            ax.scatter(optimal_mapped_points[:frame+1, 0], 
+                    optimal_mapped_points[:frame+1, 1],
+                    color='blue', alpha=0.5, label='Corrected Points')
+            
+            # Plot mapping line for current point
+            line = optimal_mapping_lines[frame]
+            ax.plot([line[0][0], line[1][0]], [line[0][1], line[1][1]], 
+                    'k-', alpha=0.5, label='Mapping' if frame == 0 else "")
+            
+            ax.set_title(f'Point Mapping Process (Point {frame+1}/{len(gdf)})')
+            ax.legend()
+            return []
+        
+        anim = FuncAnimation(fig, update, init_func=init, frames=len(gdf),
+                            interval=100, blit=True)
+        
+        # Save animation
+        writer = animation.FFMpegWriter(fps=10, bitrate=1800)
+        anim.save(os.path.join(output_dir, 'mapping_process.mp4'), writer=writer)
+        plt.close()
     
     return gdf
 
@@ -580,29 +593,37 @@ def group_gps_by_distance(
 
     return segments
 
-def add_typology(data_path, typology):
+def add_typology(df, sourcedata, path_num):
     """Add typology for each gps coordinate based on predefined classification of the urban seettings associated with the gps coordinates. The typology information is present in one excel file which contains the intervals in meters associated with each typology. This function associates the GPS coordinates from the path with the typology. It does so by computing the havesine distance for successive GPS coordinates until the distance is greater than the interval in meters associated with the typology. The input should be an excel file with longittude and latitude columns. The output is a new excel file with the typology column added.
     
     Args:
-        data_path (str): Data path to add the typology.
-        typology (str): Typology to add to the data path.
+        df (pd.DataFrame): Dataframe with GPS coordinates.
+        sourcedata (str): Path to the sourcedata directory.
+        path_num (str): Path number.
     
     Returns:
         str: Data path with the typology added.
     """
 
-    # Compute haversine dist
+    # Get excel with typologies
+    typologies_file = os.path.join(sourcedata, 'supp', 'typologies', 'typologies.xlsx')
+    typologies_df   = pd.read_excel(typologies_file)
+    typedf          = typologies_df.loc[typologies_df['pathnum'] == path_num].copy()
     
-    # Load the data
-    data = pd.read_excel(data_path)
-    
-    # Add the typology
-    data['typology'] = typology
-    
-    # Save the data
-    data.to_excel(data_path, index=False)
-    
-    return data_path
+    if not typedf.empty:
+        def find_typology(dist_value):
+            row = typedf.loc[(typedf['lowerbound'] <= dist_value) & 
+                            (dist_value < typedf['higherbound'])]
+            if row.empty:
+                return np.nan
+            return row.iloc[0]['typology']
+
+        df['typology'] = df['cum_dist'].apply(find_typology)
+    else:
+        print("No matching rows in typologies for this path.")
+
+    return df
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                   FORMULAS                                    # 

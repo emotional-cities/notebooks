@@ -18,6 +18,10 @@ import datetime
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def empatica_and_ecg_to_csv(datapicker, outdir):
+
+    """Extracts Empatica and ECG data from the datapicker object and saves it to CSV files.
+        As of now the ECG data is not yet correctly processed.
+    """
     
     # Get LSL markers
     lsl_markers = datapicker.streams.EEG.server_lsl_marker[datapicker.streams.EEG.server_lsl_marker.MarkerIdx>35000]

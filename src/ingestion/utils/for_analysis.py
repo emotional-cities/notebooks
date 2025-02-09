@@ -16,10 +16,6 @@ import datetime
 #                          PROCESSING FUNCTIONS                                 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-import os
-import pandas as pd
-import numpy as np
-
 def do_analysis_design(results_dir, design, **kwargs):
     """
     Join 'alldata.csv' files from {results_dir}/sub-{subject}/ses-{session}/ 
@@ -214,62 +210,4 @@ def do_analysis_design(results_dir, design, **kwargs):
     
 
 
-### PLOT ###
-
-def plot_mapped_data(shpdata, session):
-    
-    # Import necessary functions
-    from utils import fetch_path_num
-    
-    # Get path information
-    path_num = fetch_path_num(session)
-    path_num = str(path_num).zfill(2) # make it a two-digit string
-
-    # Get shapefile name
-    if path_num == '01':
-        shp_filename = "01_belem.shp"
-    elif path_num == '02':
-        shp_filename = "02_lapa.shp"
-    elif path_num == '03':
-        shp_filename = "03_gulbenkian.shp"
-    elif path_num == '04':
-        shp_filename = "04_Baixa.shp"
-    elif path_num == '05':
-        shp_filename = "05_Graca.shp"
-    elif path_num == '06':
-        shp_filename = "06_Pnacoes.shp"
-    elif path_num == '07':
-        shp_filename = "07_ANovas_Sa_Bandeira.shp"
-    elif path_num == '08':
-        shp_filename = "08_ANovas_CMoeda.shp"
-    elif path_num == '09':
-        shp_filename = "09_PFranca_Escolas.shp"
-    elif path_num == '10':
-        shp_filename = "10_PFranca_Morais_Soares.shp"
-    elif path_num == '11':
-        shp_filename = "11_Marvila_Beato.shp"
-    elif path_num == '12':
-        shp_filename = "12_PNacoes_Gare.shp"
-    elif path_num == '13':
-        shp_filename = "13_Madredeus.shp"
-    elif path_num == '14':
-        shp_filename = "14_Benfica_Pupilos.shp"
-    elif path_num == '15':
-        shp_filename = "15_Benfica_Moinhos.shp"
-    elif path_num == '16':
-        shp_filename = "16_Benfica_Grandella.shp"
-    elif path_num == '17':
-        shp_filename = "17_Restauradores.shp"
-    elif path_num == '18':
-        shp_filename = "18_Belem_Estadio.shp"
-    elif path_num == '19':
-        shp_filename = "19_Estrela_Jardim.shp"
-    elif path_num == '20':
-        shp_filename = "20_Estrela_Assembleia.shp"
-    elif path_num == '21':
-        shp_filename = "21_Estrela_Rato.shp"
-    elif path_num == '22':
-        shp_filename = "22_Estrela_Prazeres.shp"
-    # Correct GPS data
-    shp_file        = os.path.join(shpdata, shp_filename)
 
