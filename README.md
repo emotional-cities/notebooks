@@ -12,6 +12,11 @@ More information about sample data sharing can be found in the [eMOTIONAL Cities
 
 We recommend [uv](https://docs.astral.sh/uv/) for python version, environment, and package dependency management. However, any other tool compatible with the `pyproject.toml` standard should work.
 
+### Prerequisites
+
+1. Install [uv](https://docs.astral.sh/uv/)
+2. Install [Python Extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+
 ### Install from source
 
 ```
@@ -19,6 +24,8 @@ git clone https://github.com/emotional-cities/notebooks.git
 cd notebooks
 uv sync
 ```
+
+Open the notebook and select the `.venv` environment kernel.
 
 ## How to export a dataset to OGC API records
 
