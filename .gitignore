@@ -1,10 +1,8 @@
-__pycache__
-winpython
-packages
-cache
-.env
-.vscode
-.conda
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# IDE
+.vscode/
 
 ## Data files
 *.avi
@@ -15,3 +13,8 @@ cache
 
 ## Local config files
 ingestion.config
+
+# Environment
+.venv/
+.conda/
+uv.lock
