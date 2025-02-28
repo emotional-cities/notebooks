@@ -10,5 +10,5 @@ dependencies = [
     "ipykernel>=6.29.5",
     "ipympl>=0.9.6",
     "opencv-python>=4.11.0.86",
-    "pluma-analysis>=0.9.2",
+    "pluma-analysis>=0.10.0",
 ]
